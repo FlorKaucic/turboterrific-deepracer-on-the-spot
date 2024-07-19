@@ -3,6 +3,11 @@ def reward_function(params):
     Example of penalize steering, which helps mitigate zig-zag behaviors
     """
 
+    import logging
+    import math
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
     def dist_2_points(x1, x2, y1, y2):
         return abs(abs(x1 - x2) ** 2 + abs(y1 - y2) ** 2) ** 0.5
 
@@ -246,37 +251,29 @@ def reward_function(params):
     distance_to_racing_line = dist_to_racing_line(
         optimals[0:2], optimals_second[0:2], [params["x"], params["y"]]
     )
+    distance_to_racing_line_pct = distance_to_racing_line / (0.5 * track_width)
 
     # Read input parameters
-    # distance_from_center = params['distance_from_center']
     track_width = params["track_width"]
     abs_steering = abs(
         params["steering_angle"]
     )  # Only need the absolute steering angle
     all_wheels_on_track = params['all_wheels_on_track']
 
-    # Calculate 3 marks that are farther and father away from the center line
-    marker_1 = 0.1 * track_width
-    marker_2 = 0.25 * track_width
-    marker_3 = 0.5 * track_width
-    # Give higher reward if the car is closer to center line and vice versa
-    if distance_to_racing_line <= marker_1:
-        reward = 1.0
-    elif distance_to_racing_line <= marker_2:
-        reward = 0.5
-    elif distance_to_racing_line <= marker_3:
-        reward = 0.1
-    else:
-        reward = (1e-3,)  # likely crashed/ close to off track
-
-    # Steering penality threshold, change the number based on your action space setting
-    ABS_STEERING_THRESHOLD = 15
-    # Penalize reward if the car is steering too much
-    if abs_steering > ABS_STEERING_THRESHOLD:
-        reward *= 0.8
-
     if not all_wheels_on_track:
         # Heavily penalize if it goes out of track as it means its disqualified
-        reward *= 1e-3
+        reward = 1e-3
+        logger.info("#TT# All wheels out of track! Reward: {}.".format(reward))
+    else:
+        # Give higher reward if the car is closer to center line and vice versa
+        reward = math.exp(-5*distance_to_racing_line_pct)
+        logger.info("#TT# Reward after distance to racing line ({}): {}.".format(distance_to_racing_line_pct, reward))
+
+        # Steering penality threshold, change the number based on your action space setting
+        ABS_STEERING_THRESHOLD = 15
+        # Penalize reward if the car is steering too much
+        if abs_steering > ABS_STEERING_THRESHOLD:
+            reward *= 0.8
+        logger.info("#TT# Reward after steering compensation ({}): {}.".format(abs_steering, reward))
 
     return float(reward)
