@@ -268,6 +268,7 @@ def reward_function(params):
         reward = 0.1
     else:
         reward = (1e-3,)  # likely crashed/ close to off track
+
     # Steering penality threshold, change the number based on your action space setting
     ABS_STEERING_THRESHOLD = 15
     # Penalize reward if the car is steering too much
