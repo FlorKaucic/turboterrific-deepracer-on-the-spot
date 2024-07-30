@@ -248,17 +248,19 @@ def reward_function(params):
     optimals = racing_line[closest_index]
     optimals_second = racing_line[second_closest_index]
 
-    distance_to_racing_line = dist_to_racing_line(
-        optimals[0:2], optimals_second[0:2], [params["x"], params["y"]]
-    )
-    distance_to_racing_line_pct = distance_to_racing_line / (0.5 * track_width)
-
     # Read input parameters
     track_width = params["track_width"]
     abs_steering = abs(
         params["steering_angle"]
     )  # Only need the absolute steering angle
     all_wheels_on_track = params['all_wheels_on_track']
+
+    # Calculate distance to optimal racing line to use this one for rewards
+    # (instead of distance to track center)
+    distance_to_racing_line = dist_to_racing_line(
+        optimals[0:2], optimals_second[0:2], [params["x"], params["y"]]
+    )
+    distance_to_racing_line_pct = distance_to_racing_line / (0.5 * track_width)
 
     if not all_wheels_on_track:
         # Heavily penalize if it goes out of track as it means its disqualified
