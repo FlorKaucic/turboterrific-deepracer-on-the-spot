@@ -3,10 +3,7 @@ def reward_function(params):
     Example of penalize steering, which helps mitigate zig-zag behaviors
     """
 
-    import logging
     import math
-    logger = logging.getLogger()
-    logger.setLevel(logging.INFO)
 
     def dist_2_points(x1, x2, y1, y2):
         return abs(abs(x1 - x2) ** 2 + abs(y1 - y2) ** 2) ** 0.5
@@ -265,17 +262,17 @@ def reward_function(params):
     if not all_wheels_on_track:
         # Heavily penalize if it goes out of track as it means its disqualified
         reward = 1e-3
-        logger.info("#TT# All wheels out of track! Reward: {}.".format(reward))
+        print("#TT# All wheels out of track! Reward: {}.".format(reward))
     else:
         # Give higher reward if the car is closer to center line and vice versa
         reward = math.exp(-5*distance_to_racing_line_pct)
-        logger.info("#TT# Reward after distance to racing line ({}): {}.".format(distance_to_racing_line_pct, reward))
+        print("#TT# Reward after distance to racing line ({}): {}.".format(distance_to_racing_line_pct, reward))
 
         # Steering penality threshold, change the number based on your action space setting
         ABS_STEERING_THRESHOLD = 15
         # Penalize reward if the car is steering too much
         if abs_steering > ABS_STEERING_THRESHOLD:
             reward *= 0.8
-        logger.info("#TT# Reward after steering compensation ({}): {}.".format(abs_steering, reward))
+        print("#TT# Reward after steering compensation ({}): {}.".format(abs_steering, reward))
 
     return float(reward)
