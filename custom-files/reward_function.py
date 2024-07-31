@@ -265,7 +265,10 @@ def reward_function(params):
         print("#TT# All wheels out of track! Reward: {}.".format(reward))
     else:
         # Give higher reward if the car is closer to center line and vice versa
-        reward = math.exp(-5*distance_to_racing_line_pct)
+
+        # Original:
+        # reward = math.exp(-5*distance_to_racing_line_pct)
+        reward = 1 - distance_to_racing_line_pct
         print("#TT# Reward after distance to racing line ({}): {}.".format(distance_to_racing_line_pct, reward))
 
         # Steering penality threshold, change the number based on your action space setting
