@@ -21,3 +21,7 @@ Calculates reward based on:
 #### Notes:
 - the reward is now using 1-x, but we attempted to use e^-5x, although evaluation lap took over 1min to complete for that model
 - also attempted to revert the changes in the action space (added intermediate options for turning) but this also proved to be worse
+
+## branch: fast-and-furious
+Calculates rewards based on the changes in reward-function-2.
+Modified action space to have higher speed values.
