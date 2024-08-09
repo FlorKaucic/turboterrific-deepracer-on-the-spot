@@ -23,5 +23,9 @@ Calculates reward based on:
 - also attempted to revert the changes in the action space (added intermediate options for turning) but this also proved to be worse
 
 ## branch: fast-and-furious
-Calculates rewards based on the changes in reward-function-2.
-Modified action space to have higher speed values.
+Calculates rewards based on the changes in reward-function-2.\
+Modified action space to have higher speed values (but had to reduce it a bit again because it was causing more chaos at the initial training)
+
+|Best model so far on this branch|turboterrific-v8-fk-nafaf-4cont (avg lap time: 23.465)|
+|---|-----------------------------------------------------------------------------------------------------------------------------|
+|Currently training|continuing turboterrific-v8-fk-nafaf-4cont as turboterrific-v8-fk-nafaf-5cont-llr with a lower learning rate for fine tuning |
