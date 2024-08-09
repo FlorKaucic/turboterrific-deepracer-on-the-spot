@@ -29,3 +29,7 @@ Modified action space to have higher speed values (but had to reduce it a bit ag
 |Best model so far on this branch|turboterrific-v8-fk-nafaf-4cont (avg lap time: 23.465)|
 |---|-----------------------------------------------------------------------------------------------------------------------------|
 |Currently training|continuing turboterrific-v8-fk-nafaf-4cont as turboterrific-v8-fk-nafaf-5cont-llr with a lower learning rate for fine tuning |
+
+## branch: tokyo-drift
+Based on fast-and-furious (duh, of course...)\
+Increasing speed again for further training. Last testing wasn't conclusive enough.
