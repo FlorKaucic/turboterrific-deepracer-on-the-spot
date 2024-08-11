@@ -249,6 +249,9 @@ def reward_function(params):
         params["steering_angle"]
     )  # Only need the absolute steering angle
     all_wheels_on_track = params['all_wheels_on_track']
+    closest_waypoints = params['closest_waypoints']
+    prev_point = closest_waypoints[0]
+    next_point = closest_waypoints[1]
 
     # Calculate distance to optimal racing line to use this one for rewards
     # (instead of distance to track center)
@@ -270,9 +273,19 @@ def reward_function(params):
         print("#TT# Reward after distance to racing line ({}): {}.".format(distance_to_racing_line_pct, reward))
 
         # Steering penality threshold, change the number based on your action space setting
-        ABS_STEERING_THRESHOLD = 15
-        # Penalize reward if the car is steering too much
-        if abs_steering > ABS_STEERING_THRESHOLD:
+        ABS_STEERING_THRESHOLD = 20
+        SPEED_THRESHOLD = 2.5
+        if (
+            prev_point > 141
+            or next_point < 11
+            or (prev_point > 21 and next_point < 35)
+            or (prev_point > 109 and next_point < 132)
+        ):
+            if speed < SPEED_THRESHOLD:
+                # Heavily penalize reward if the car steers on straight paths
+                reward *= 0.5
+        elif abs_steering > ABS_STEERING_THRESHOLD:
+            # Penalize reward if the car is steering too much
             reward *= 0.8
         print("#TT# Reward after steering compensation ({}): {}.".format(abs_steering, reward))
 
