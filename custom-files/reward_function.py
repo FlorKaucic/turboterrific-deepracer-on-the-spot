@@ -245,6 +245,7 @@ def reward_function(params):
 
     # Read input parameters
     track_width = params["track_width"]
+    speed = params["speed"]
     abs_steering = abs(
         params["steering_angle"]
     )  # Only need the absolute steering angle
