@@ -279,16 +279,25 @@ def reward_function(params):
 
         # Steering penality threshold, change the number based on your action space setting
         ABS_STEERING_THRESHOLD = 20
-        SPEED_THRESHOLD = 2.5
+        ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 7
+        LOW_SPEED_THRESHOLD = 2.5
+        MEDIUM_SPEED_THRESHOLD = 3
         if (
-            prev_point > 141
-            or next_point < 11
-            or (prev_point > 21 and next_point < 35)
-            or (prev_point > 109 and next_point < 132)
+            prev_point > 142
+            or next_point < 10
+            or (prev_point > 22 and next_point < 34)
+            or (prev_point > 110 and next_point < 131)
         ):
-            if speed < SPEED_THRESHOLD:
-                # Heavily penalize reward if the car steers on straight paths
+            if speed < LOW_SPEED_THRESHOLD:
+                # Heavily penalize reward if the car doesn't speed up on straight paths
                 reward *= 0.5
+            elif speed < MEDIUM_SPEED_THRESHOLD:
+                # Penalize reward if the car doesn't speed up enough on straight paths
+                reward *= 0.8
+
+            if abs_steering > ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD:
+                # Penalize reward if the car is steering too much on straight paths
+                reward *= 0.6
         elif abs_steering > ABS_STEERING_THRESHOLD:
             # Penalize reward if the car is steering too much
             reward *= 0.8
