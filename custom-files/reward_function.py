@@ -75,7 +75,7 @@ def reward_function(params):
 
         return distance
 
-    # optimal racing line for 2022_reinvent_champ
+    # optimal racing line for 2022_reinvent_champ_ccw
     racing_line = [
         [0.7082, 0.35669, 4.0, 0.0758],
         [0.50682, 0.58334, 4.0, 0.0758],
