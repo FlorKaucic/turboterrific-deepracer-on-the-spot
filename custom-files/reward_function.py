@@ -1,3 +1,5 @@
+from pprint import pprint
+
 def reward_function(params):
     """
     Example of penalize steering, which helps mitigate zig-zag behaviors
@@ -207,6 +209,7 @@ def reward_function(params):
         params["steering_angle"]
     )  # Only need the absolute steering angle
     all_wheels_on_track = params['all_wheels_on_track']
+    is_offtrack = params['is_offtrack']
     closest_waypoints = params['closest_waypoints']
     prev_point = closest_waypoints[0]
     next_point = closest_waypoints[1]
@@ -218,17 +221,18 @@ def reward_function(params):
     )
     distance_to_racing_line_pct = distance_to_racing_line / (0.5 * track_width)
 
-    if not all_wheels_on_track:
+    if is_offtrack:
         # Heavily penalize if it goes out of track as it means its disqualified
         reward = 1e-3
-        print("#TT# All wheels out of track! Reward: {}.".format(reward))
     else:
         # Give higher reward if the car is closer to center line and vice versa
 
         # Original:
         # reward = math.exp(-5*distance_to_racing_line_pct)
         reward = 1 - distance_to_racing_line_pct
-        print("#TT# Reward after distance to racing line ({}): {}.".format(distance_to_racing_line_pct, reward))
+
+        if not all_wheels_on_track:
+            reward *= 0.7
 
         # Steering penality threshold, change the number based on your action space setting
         ABS_STEERING_THRESHOLD = 20
@@ -246,4 +250,28 @@ def reward_function(params):
         #         reward *= 0.8
         #         print("#TT# Reward after steering compensation ({}): {}.".format(abs_steering, reward))
 
-    return float(reward)
+    reward = float(reward)
+
+    pprint(dict(
+        x=params["x"],
+        y=params["y"],
+        track_width=track_width,
+        track_length=params["track_length"],
+        speed=speed,
+        abs_steering=abs_steering,
+        all_wheels_on_track=all_wheels_on_track,
+        is_offtrack=is_offtrack,
+        prev_point=prev_point,
+        next_point=next_point,
+        distance_from_center=params["distance_from_center"],
+        distance_to_racing_line=distance_to_racing_line,
+        distance_to_racing_line_pct=distance_to_racing_line_pct,
+        optimals=optimals,
+        optimals_second=optimals_second,
+        closest_index=closest_index,
+        second_closest_index=second_closest_index,
+        reward=reward,
+        progress=params["progress"],
+
+    ))
+    return reward
