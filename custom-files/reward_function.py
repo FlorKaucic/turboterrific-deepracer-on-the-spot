@@ -147,7 +147,7 @@ def reward_function(params):
     # Calculate distance to optimal racing line to use this one for rewards
     # (instead of distance to track center)
     distance_to_racing_line = dist_to_racing_line(
-        optimals[0:2], optimals_second[0:2], [params["x"], params["y"]]
+        optimals[0:2], optimals_second[0:2], [x, y]
     )
     distance_to_racing_line_pct = distance_to_racing_line / (0.5 * track_width)
 
