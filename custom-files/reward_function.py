@@ -127,7 +127,7 @@ def reward_function(params):
     x, y = params["x"], params["y"]
     track_width = params["track_width"]
     speed = params["speed"]
-    abs_steering = abs(params["steering_angle"]) # Only need the absolute steering angle
+    abs_steering = abs(params["steering_angle"])  # Only need the absolute steering angle
     all_wheels_on_track = params['all_wheels_on_track']
     is_offtrack = params['is_offtrack']
     prev_point, next_point = params['closest_waypoints'][0], params['closest_waypoints'][1]
