@@ -228,10 +228,10 @@ def reward_function(params):
 
     reward *= (1.0 - distance_to_racing_line_pct)  # affecting reward based on distance from the optimal line
 
-    if not all_wheels_on_track:
-        reward *= 0.7  # discouraging going out of track even if it's only one wheel
+    # if not all_wheels_on_track:
+    #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
 
-    reward *= (1.0 - ((optimal_speed - speed) / optimal_speed))  # affect reward based on speed
+    reward *= (1.0 - abs((optimal_speed - speed) / optimal_speed))  # affect reward based on speed
 
     # uncomment if not fast enough (tweak constants at the beginning)
     # if (
@@ -254,6 +254,7 @@ def reward_function(params):
         track_length=params["track_length"],
         speed=speed,
         abs_steering=abs_steering,
+        speed_factor=(1.0 - abs((optimal_speed - speed) / optimal_speed)),
         all_wheels_on_track=all_wheels_on_track,
         is_offtrack=is_offtrack,
         prev_point=prev_point,
