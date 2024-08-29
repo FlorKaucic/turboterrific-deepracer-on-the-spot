@@ -124,7 +124,8 @@ RACING_LINE = [
 class RewardCalculator(object):
     def __init__(self):
         self.prev_progress = 0
-    def calculateReward(self, params):
+
+    def calculate_reward(self, params):
         # Read input parameters
         x, y = params["x"], params["y"]
         track_width = params["track_width"]
@@ -286,5 +287,9 @@ def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
 
 
 ################################# Entry Point ##################################
+
+calculator = RewardCalculator()  # initializing calculator object
+
+
 def reward_function(params):
-    return 
+    return calculator.calculate_reward(params)
