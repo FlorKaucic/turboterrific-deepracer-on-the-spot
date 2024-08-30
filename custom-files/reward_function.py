@@ -2,7 +2,7 @@ from pprint import pprint
 
 # thresholds
 ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 10
-MIN_SPEED_ON_STRAIGHT_PATH = 3.5
+MIN_SPEED_ON_STRAIGHT_PATH = 4.0
 
 # optimal racing line for 2022_reinvent_champ_ccw
 racing_line = [
@@ -233,17 +233,17 @@ def reward_function(params):
 
     reward *= (1.0 - abs((optimal_speed - speed) / optimal_speed))  # affect reward based on speed
 
-    # uncomment if not fast enough (tweak constants at the beginning)
-    # if (
-    #     prev_point > 103
-    #     or next_point < 12
-    # ):
-    #     if speed < MIN_SPEED_ON_STRAIGHT_PATH:
-    #         # Heavily penalize reward if the car doesn't go flat out on straight paths
-    #         reward *= 0.5
-    #     if abs_steering > ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD:
-    #         # Penalize reward if the car is steering too much on straight paths
-    #         reward *= 0.6
+    
+    if (
+        prev_point > 101
+        or next_point < 7
+    ):
+        if speed < MIN_SPEED_ON_STRAIGHT_PATH:
+            # Heavily penalize reward if the car doesn't go flat out on straight paths
+            reward *= 0.5
+        # if abs_steering > ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD:
+        #     # Penalize reward if the car is steering too much on straight paths
+        #     reward *= 0.6
 
     reward = float(reward)
 
