@@ -157,7 +157,7 @@ class RewardCalculator(object):
         distance_to_racing_line = dist_to_racing_line(
             optimals[0:2], optimals_second[0:2], [x, y]
         )
-        distance_to_racing_line_pct = distance_to_racing_line / (0.5 * track_width)
+        distance_to_racing_line_pct = min(distance_to_racing_line / (0.5 * track_width), 0.999)
 
         prev_progress = self.prev_progress
         self.prev_progress = progress
@@ -183,7 +183,8 @@ class RewardCalculator(object):
         # if not all_wheels_on_track:
         #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
 
-        reward *= np.exp(-SPEED_DIFF_WEIGHT * np.abs(speed - optimal_speed))  # affect reward based on speed
+        speed_factor = np.exp(-SPEED_DIFF_WEIGHT * np.abs(speed - optimal_speed))
+        reward *= speed_factor  # affect reward based on speed
 
         # uncomment if not fast enough (tweak constants at the beginning, and it should probably be proportional)
         # if (
@@ -209,7 +210,7 @@ class RewardCalculator(object):
             optimals_second=optimals_second,
             prev_point=prev_point,
             second_closest_index=second_closest_index,
-            speed_factor=(1.0 - abs((optimal_speed - speed) / optimal_speed)),
+            speed_factor=speed_factor,
         ))
         return reward
 
