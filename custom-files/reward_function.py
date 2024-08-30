@@ -1,8 +1,12 @@
 from pprint import pprint
+import numpy as np
 
 # thresholds
 ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 10
+ABS_STEERING_ON_BUGGY_CURVES_THRESHOLD = 5
 MIN_SPEED_ON_STRAIGHT_PATH = 3.5
+
+SPEED_DIFF_WEIGHT = 0.5
 
 # optimal racing line for 2022_reinvent_champ_ccw
 RACING_LINE = [
@@ -135,19 +139,19 @@ class RewardCalculator(object):
         all_wheels_on_track = params['all_wheels_on_track']
         is_offtrack = params['is_offtrack']
         prev_point, next_point = params['closest_waypoints'][0], params['closest_waypoints'][1]
-    
+
         # Get closest indexes for racing line (and distances to all points on racing line)
         closest_index, second_closest_index = closest_2_racing_points_index(
             RACING_LINE, [x, y]
         )
-    
+
         # Get optimal [x, y] for closest and second closest index
         optimals = RACING_LINE[closest_index]
         optimals_second = RACING_LINE[second_closest_index]
-    
+
         # Extract optimal speed
         optimal_speed = optimals[2]
-    
+
         # Calculate distance to optimal racing line to use this one for rewards
         # (instead of distance to track center)
         distance_to_racing_line = dist_to_racing_line(
@@ -159,18 +163,29 @@ class RewardCalculator(object):
         self.prev_progress = progress
 
         # REWARD LOGIC:
-        if progress > (prev_progress + 5.0):
+        if progress > (prev_progress + 3.0):
             return 0  # immediately discourage buggy laps
 
         reward = 1e-3 if is_offtrack else 1  # initial value
-    
-        reward *= (1.0 - distance_to_racing_line_pct)  # affecting reward based on distance from the optimal line
-    
+
+        if (
+                (prev_point > 59 and next_point < 70)
+                or (prev_point > 43 and next_point < 54)
+        ):
+            if abs_steering < ABS_STEERING_ON_BUGGY_CURVES_THRESHOLD:
+                reward *= 0.7  # penalize if it goes flat out like a maniac here
+
+            # if it's the same part in which it always takes a shortcut, penalize this more than usual:
+            reward *= ((1.0 - distance_to_racing_line_pct) ** 2)
+
+        else:
+            reward *= (1.0 - distance_to_racing_line_pct)  # affecting reward based on distance from the optimal line
+
         # if not all_wheels_on_track:
         #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
-    
-        reward *= (1.0 - abs((optimal_speed - speed) / optimal_speed))  # affect reward based on speed
-    
+
+        reward *= np.exp(-SPEED_DIFF_WEIGHT * np.abs(speed - optimal_speed))  # affect reward based on speed
+
         # uncomment if not fast enough (tweak constants at the beginning, and it should probably be proportional)
         # if (
         #     prev_point > 103
@@ -183,9 +198,9 @@ class RewardCalculator(object):
         #     if speed < MIN_SPEED_ON_STRAIGHT_PATH:
         #         # Heavily penalize reward if the car doesn't go flat out on straight paths
         #         reward *= 0.5
-    
+
         reward = float(reward)
-    
+
         pprint(dict(
             x=x,
             y=y,
