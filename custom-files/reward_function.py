@@ -177,7 +177,6 @@ class RewardCalculator(object):
 
             # if it's the same part in which it always takes a shortcut, penalize this more than usual:
             reward *= ((1.0 - distance_to_racing_line_pct) ** 2)
-
         else:
             reward *= (1.0 - distance_to_racing_line_pct)  # affecting reward based on distance from the optimal line
 
