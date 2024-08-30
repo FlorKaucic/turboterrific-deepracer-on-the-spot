@@ -164,7 +164,7 @@ class RewardCalculator(object):
 
         # REWARD LOGIC:
         if progress > (prev_progress + 3.0):
-            return 0  # immediately discourage buggy laps
+            return 1e-5  # immediately discourage buggy laps
 
         reward = 1e-3 if is_offtrack else 1  # initial value
 
