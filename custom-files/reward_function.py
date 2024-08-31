@@ -262,7 +262,8 @@ class RewardCalculator(object):
         if progress == 100:
             currentLapTime = time.time() - self.startLapTime
             self.lastTime = currentLapTime
-            if currentLapTime < self.bestLapTime:
+            # 14 to avoid bug
+            if currentLapTime < self.bestLapTime and currentLapTime >= 14:
                 reward *= 1.3
                 self.bestLapTime = currentLapTime
 
