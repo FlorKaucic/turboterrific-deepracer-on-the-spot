@@ -1,11 +1,12 @@
 from pprint import pprint
+import time
 
 # thresholds
 ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 10
 MIN_SPEED_ON_STRAIGHT_PATH = 4.0
 
 # optimal racing line for 2022_reinvent_champ_ccw
-racing_line = [
+RACING_LINE = [
     [0.7082, 0.35669, 5.0, 0.06064],
     [0.50682, 0.58334, 5.0, 0.06064],
     [0.30523, 0.8098, 5.0, 0.06064],
@@ -193,69 +194,102 @@ def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
 
     return distance
 
+class RewardCalculator(object):
+    def __init__(self):
+        currentTime = time.time()
+        self.startTime = currentTime
+        self.lastTime = currentTime
+        self.bestLapTime = currentTime
+        self.startLapTime = currentTime
+
+    def compute(self, params):
+        # Read input parameters
+        x, y = params["x"], params["y"]
+        track_width = params["track_width"]
+        speed = params["speed"]
+        abs_steering = abs(params["steering_angle"])  # Only need the absolute steering angle
+        is_offtrack = params['is_offtrack']
+        prev_point, next_point = params['closest_waypoints'][0], params['closest_waypoints'][1]
+        progress = params["progress"]
+
+        currentTime = time.time()
+
+        if progress == 0:
+            self.startLapTime = time.time()
+
+        # Get closest indexes for racing line (and distances to all points on racing line)
+        closest_index, second_closest_index = closest_2_racing_points_index(
+            RACING_LINE, [x, y]
+        )
+
+        # Get optimal [x, y] for closest and second closest index
+        optimals = RACING_LINE[closest_index]
+        optimals_second = RACING_LINE[second_closest_index]
+
+        # Extract optimal speed
+        optimal_speed = optimals[2]
+
+        # Calculate distance to optimal racing line to use this one for rewards
+        # (instead of distance to track center)
+        distance_to_racing_line = dist_to_racing_line(
+            optimals[0:2], optimals_second[0:2], [x, y]
+        )
+        distance_to_racing_line_pct = distance_to_racing_line / (0.5 * track_width)
+
+        # REWARD LOGIC:
+        reward = 1e-3 if is_offtrack else 1  # initial value
+
+        reward *= (1.0 - distance_to_racing_line_pct)  # affecting reward based on distance from the optimal line
+
+        # if not all_wheels_on_track:
+        #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
+
+        reward *= (1.0 - abs((optimal_speed - speed) / optimal_speed))  # affect reward based on speed
+
+        
+        if (
+            prev_point > 101
+            or next_point < 7
+        ):
+            if speed < MIN_SPEED_ON_STRAIGHT_PATH:
+                # Heavily penalize reward if the car doesn't go flat out on straight paths
+                reward *= 0.5
+            # if abs_steering > ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD:
+            #     # Penalize reward if the car is steering too much on straight paths
+            #     reward *= 0.6
+
+        # reward for faster laps
+        if progress == 100:
+            currentLapTime = time.time() - self.startLapTime
+            self.lastTime = currentLapTime
+            if currentLapTime < self.bestLapTime:
+                reward *= 1.3
+                self.bestLapTime = currentLapTime
+
+        reward = float(reward)
+
+        pprint(dict(
+                progress=progress,
+                timeSoFar=time.time() - self.startLapTime,
+                bestLapTime=self.bestLapTime,
+                abs_steering=abs_steering,
+                closest_index=closest_index,
+                distance_to_racing_line=distance_to_racing_line,
+                distance_to_racing_line_pct=distance_to_racing_line_pct,
+                optimals=optimals,
+                optimals_second=optimals_second,
+                prev_point=prev_point,
+                second_closest_index=second_closest_index,
+                speed_factor=(1.0 - abs((optimal_speed - speed) / optimal_speed)),
+        ))
+        return reward
+
+
+calculator = RewardCalculator()
 
 def reward_function(params):
-    # Read input parameters
-    x, y = params["x"], params["y"]
-    track_width = params["track_width"]
-    speed = params["speed"]
-    abs_steering = abs(params["steering_angle"])  # Only need the absolute steering angle
-    all_wheels_on_track = params['all_wheels_on_track']
-    is_offtrack = params['is_offtrack']
-    prev_point, next_point = params['closest_waypoints'][0], params['closest_waypoints'][1]
-
-    # Get closest indexes for racing line (and distances to all points on racing line)
-    closest_index, second_closest_index = closest_2_racing_points_index(
-        racing_line, [x, y]
-    )
-
-    # Get optimal [x, y] for closest and second closest index
-    optimals = racing_line[closest_index]
-    optimals_second = racing_line[second_closest_index]
-
-    # Extract optimal speed
-    optimal_speed = optimals[2]
-
-    # Calculate distance to optimal racing line to use this one for rewards
-    # (instead of distance to track center)
-    distance_to_racing_line = dist_to_racing_line(
-        optimals[0:2], optimals_second[0:2], [x, y]
-    )
-    distance_to_racing_line_pct = distance_to_racing_line / (0.5 * track_width)
-
-    # REWARD LOGIC:
-    reward = 1e-3 if is_offtrack else 1  # initial value
-
-    reward *= (1.0 - distance_to_racing_line_pct)  # affecting reward based on distance from the optimal line
-
-    # if not all_wheels_on_track:
-    #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
-
-    reward *= (1.0 - abs((optimal_speed - speed) / optimal_speed))  # affect reward based on speed
+    return calculator.compute(params)
 
     
-    if (
-        prev_point > 101
-        or next_point < 7
-    ):
-        if speed < MIN_SPEED_ON_STRAIGHT_PATH:
-            # Heavily penalize reward if the car doesn't go flat out on straight paths
-            reward *= 0.5
-        # if abs_steering > ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD:
-        #     # Penalize reward if the car is steering too much on straight paths
-        #     reward *= 0.6
 
-    reward = float(reward)
-
-    pprint(dict(
-            abs_steering=abs_steering,
-            closest_index=closest_index,
-            distance_to_racing_line=distance_to_racing_line,
-            distance_to_racing_line_pct=distance_to_racing_line_pct,
-            optimals=optimals,
-            optimals_second=optimals_second,
-            prev_point=prev_point,
-            second_closest_index=second_closest_index,
-            speed_factor=(1.0 - abs((optimal_speed - speed) / optimal_speed)),
-    ))
-    return reward
+    
