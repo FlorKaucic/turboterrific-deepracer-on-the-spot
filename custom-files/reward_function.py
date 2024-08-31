@@ -1,4 +1,5 @@
 from pprint import pprint
+import math
 import time
 
 # thresholds
@@ -262,10 +263,14 @@ class RewardCalculator(object):
         if progress == 100:
             currentLapTime = time.time() - self.startLapTime
             self.lastTime = currentLapTime
-            # 14 to avoid bug
-            if currentLapTime < self.bestLapTime and currentLapTime >= 14:
-                reward *= 1.3
+        
+            # 15 to avoid bug
+            if currentLapTime < self.bestLapTime and currentLapTime >= 15:
+                reward *= 1.5
                 self.bestLapTime = currentLapTime
+
+            elif currentLapTime >= self.bestLapTime:
+                reward *= math.exp(-2*(1 - (self.bestLapTime / currentLapTime)))
 
         reward = float(reward)
 
