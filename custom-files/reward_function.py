@@ -282,6 +282,7 @@ class RewardCalculator():
             last_lap_time=self.lap_start_time,
             progress=progress,
             track_len=track_len,
+            lap_time=time.time() - self.lap_start_time,
         ))
         return reward
 
