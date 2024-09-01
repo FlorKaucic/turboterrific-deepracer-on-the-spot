@@ -203,6 +203,7 @@ class RewardCalculator(object):
     def __init__(self):
         self.prev_progress = 0
         self.start_time = self.current_time = time.time()
+        self.accumulated_reward = 0
 
     def reward_function(self, params):
         # Read input parameters
@@ -234,10 +235,10 @@ class RewardCalculator(object):
         distance_to_racing_line_pct = min(distance_to_racing_line / (0.5 * track_width), 0.99)
 
         # REWARD LOGIC:
-        reward = 1  # initial value
-
         if is_offtrack:
-            return reward
+            return self.accumulated_reward * -1 + 1e-3
+
+        reward = 1  # initial value
 
         # affecting reward based on distance from the optimal line
         racing_line_reward = 10000 * (1.0 - distance_to_racing_line_pct)
@@ -288,6 +289,9 @@ class RewardCalculator(object):
             ],
             zigzag_reward=zigzag_reward,
         ))
+
+        self.accumulated_reward += reward
+
         return reward
 
 
