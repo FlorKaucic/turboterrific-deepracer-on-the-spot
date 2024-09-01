@@ -4,7 +4,7 @@ from pprint import pprint
 # thresholds
 ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 10
 MIN_SPEED_ON_STRAIGHT_PATH = 4.0
-TOTAL_NUM_STEPS = 235
+TOTAL_NUM_STEPS = 240
 
 # optimal racing line for 2022_reinvent_champ_ccw
 racing_line = [
@@ -251,10 +251,9 @@ class RewardCalculator():
 
         # Penalize reward if the car pass every 50 steps slower than expected
         expected_progress = (steps / TOTAL_NUM_STEPS) * 100
-        if (steps % 50) == 0 and progress < expected_progress:
+        if (steps % 20) == 0 and progress < expected_progress:
             penalty_factor = 1.0 - ((expected_progress - progress) / 100.0)
             reward *= penalty_factor
-#            reward *= progress - (steps / TOTAL_NUM_STEPS) * 100
 
         if prev_point > 101 or next_point < 7:
             if speed < MIN_SPEED_ON_STRAIGHT_PATH:
