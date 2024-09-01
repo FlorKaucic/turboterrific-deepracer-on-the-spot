@@ -252,13 +252,12 @@ class RewardCalculator(object):
         speed_reward = 10000 * min(1.0 - speed_factor, 1.2) # allow up to 20% increase from 'optimal' speed
         reward += SPEED_WEIGHT * speed_reward
 
-
         if (
             prev_point > 101
             or next_point < 7
         ):
             # Heavily penalize reward if the car doesn't go flat out on straight paths
-            min_speed_discount = (optimal_speed - speed) / optimal_speed
+            min_speed_discount = (MIN_SPEED_ON_STRAIGHT_PATH - speed) / MIN_SPEED_ON_STRAIGHT_PATH
             min_speed_reward = 10000 * (1.0 - min_speed_discount)
 
             # Penalize reward if the car is steering too much on straight paths
