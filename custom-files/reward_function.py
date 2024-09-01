@@ -8,7 +8,7 @@ RACING_LINE_WEIGHT = 2
 SPEED_WEIGHT = 4
 ZIGZAG_ON_STRAIGHT_PATH_WEIGHT = 3
 MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT = 3.7
-BASE_REWARD = 1000
+BASE_REWARD = 100
 
 # optimal racing line for 2022_reinvent_champ_ccw
 racing_line = [
