@@ -8,6 +8,7 @@ RACING_LINE_WEIGHT = 2
 SPEED_WEIGHT = 4
 ZIGZAG_ON_STRAIGHT_PATH_WEIGHT = 3
 MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT = 3.7
+BASE_REWARD = 1000
 
 # optimal racing line for 2022_reinvent_champ_ccw
 racing_line = [
@@ -243,7 +244,7 @@ class RewardCalculator(object):
         reward = 1  # initial value
 
         # affecting reward based on distance from the optimal line
-        racing_line_reward = 10000 * (1.0 - distance_to_racing_line_pct)
+        racing_line_reward = BASE_REWARD * (1.0 - distance_to_racing_line_pct)
         reward += RACING_LINE_WEIGHT * racing_line_reward
 
         # if not all_wheels_on_track:
@@ -251,7 +252,7 @@ class RewardCalculator(object):
 
         # affect reward based on speed
         speed_factor = (optimal_speed - speed) / optimal_speed
-        speed_reward = 10000 * min(1.0 - speed_factor, 1.2)  # allow up to 20% increase from 'optimal' speed
+        speed_reward = BASE_REWARD * min(1.0 - speed_factor, 1.2)  # allow up to 20% increase from 'optimal' speed
         reward += SPEED_WEIGHT * speed_reward
 
         if (
@@ -260,14 +261,14 @@ class RewardCalculator(object):
         ):
             # Heavily penalize reward if the car doesn't go flat out on straight paths
             min_speed_discount = (MIN_SPEED_ON_STRAIGHT_PATH - speed) / MIN_SPEED_ON_STRAIGHT_PATH
-            min_speed_reward = 10000 * (1.0 - min_speed_discount)
+            min_speed_reward = BASE_REWARD * (1.0 - min_speed_discount)
 
             # Penalize reward if the car is steering too much on straight paths
             zigzag_discount = (
                     (abs_steering - ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD) /
                     ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD
             )
-            zigzag_reward = 10000 * (1.0 - zigzag_discount)
+            zigzag_reward = BASE_REWARD * (1.0 - zigzag_discount)
         else:
             min_speed_reward = 0
             zigzag_reward = 0
