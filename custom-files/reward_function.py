@@ -4,7 +4,7 @@ from pprint import pprint
 # thresholds
 ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 10
 MIN_SPEED_ON_STRAIGHT_PATH = 4.0
-TOTAL_NUM_STEPS = 240
+TOTAL_NUM_STEPS = 235
 
 # optimal racing line for 2022_reinvent_champ_ccw
 racing_line = [
