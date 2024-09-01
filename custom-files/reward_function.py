@@ -236,7 +236,9 @@ class RewardCalculator(object):
 
         # REWARD LOGIC:
         if is_offtrack:
-            return self.accumulated_reward * -1 + 1e-3
+            reward = self.accumulated_reward * -1 + 1e-3
+            self.accumulated_reward = 0
+            return reward
 
         reward = 1  # initial value
 
@@ -249,7 +251,7 @@ class RewardCalculator(object):
 
         # affect reward based on speed
         speed_factor = (optimal_speed - speed) / optimal_speed
-        speed_reward = 10000 * min(1.0 - speed_factor, 1.2) # allow up to 20% increase from 'optimal' speed
+        speed_reward = 10000 * min(1.0 - speed_factor, 1.2)  # allow up to 20% increase from 'optimal' speed
         reward += SPEED_WEIGHT * speed_reward
 
         if (
@@ -276,6 +278,7 @@ class RewardCalculator(object):
         reward = float(reward)
 
         print(dict(
+            accumulated_reward=self.accumulated_reward,
             min_speed_reward=min_speed_reward,
             optimals=optimals,
             racing_line_reward=racing_line_reward,
