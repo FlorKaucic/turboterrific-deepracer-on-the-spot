@@ -4,10 +4,15 @@ from pprint import pprint
 # thresholds
 ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 10
 MIN_SPEED_ON_STRAIGHT_PATH = 3.7
+STEPS_THRESHOLD = 245
+
+# weights
+MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT = 1
 RACING_LINE_WEIGHT = 1
-SPEED_WEIGHT = 1
-ZIGZAG_ON_STRAIGHT_PATH_WEIGHT = 3
-MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT = 4
+SPEED_WEIGHT = 2
+STEPS_WEIGHT = 2
+ZIGZAG_ON_STRAIGHT_PATH_WEIGHT = 1
+
 BASE_REWARD = 10
 
 # optimal racing line for 2022_reinvent_champ_ccw
@@ -214,6 +219,8 @@ class RewardCalculator(object):
         abs_steering = abs(params["steering_angle"])  # Only need the absolute steering angle
         all_wheels_on_track = params['all_wheels_on_track']
         is_offtrack = params['is_offtrack']
+        steps = params['steps']
+        progress = params['progress']
         prev_point, next_point = params['closest_waypoints'][0], params['closest_waypoints'][1]
 
         # Get closest indexes for racing line (and distances to all points on racing line)
@@ -236,7 +243,13 @@ class RewardCalculator(object):
         distance_to_racing_line_pct = min(distance_to_racing_line / (0.5 * track_width), 0.99)
 
         # REWARD LOGIC:
-        if is_offtrack:
+        prev_progress = self.prev_progress
+        self.prev_progress = progress
+
+        if progress > (prev_progress + 5.0):
+            return 1e-5  # immediately discourage buggy laps
+
+        if is_offtrack or progress > (prev_progress + 3.0):
             reward = self.accumulated_reward * -1 + 1e-3
             self.accumulated_reward = 0
             return reward
@@ -276,14 +289,19 @@ class RewardCalculator(object):
         reward += MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT * min_speed_reward
         reward += ZIGZAG_ON_STRAIGHT_PATH_WEIGHT * zigzag_reward
 
+        steps_discount = (steps / STEPS_THRESHOLD) - (progress / 100)
+        steps_reward = BASE_REWARD * (1.0 - steps_discount)
+        reward += STEPS_WEIGHT * zigzag_reward
+
         reward = float(reward)
 
-        print(dict(
+        pprint(dict(
             accumulated_reward=self.accumulated_reward,
             min_speed_reward=min_speed_reward,
             optimals=optimals,
             racing_line_reward=racing_line_reward,
             speed_reward=speed_reward,
+            steps_reward=steps_reward,
             weights=[
                 MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT,
                 RACING_LINE_WEIGHT,
