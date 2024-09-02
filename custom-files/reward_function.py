@@ -4,7 +4,7 @@ from pprint import pprint
 # thresholds
 ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 10
 MIN_SPEED_ON_STRAIGHT_PATH = 4.0
-TOTAL_NUM_STEPS = 233
+TOTAL_NUM_STEPS = 229
 OPTIMAL_SPEED = 2.27
 
 # optimal racing line for 2022_reinvent_champ_ccw
@@ -203,7 +203,6 @@ class RewardCalculator:
         self.avg_speed = 0
         self.start_time = time.time()
         self.lap_start_time = time.time()
-        self.last_lap_steps = 0
 
     def calculate_reward(self, params):
         # Read input parameters
@@ -259,7 +258,7 @@ class RewardCalculator:
         expected_progress = (steps / TOTAL_NUM_STEPS) * 100
         progress_penalty_factor = 1
         if (steps % 20) == 0 and progress < expected_progress:
-            progress_penalty_factor = 1.0 - ((expected_progress - progress) / 100.0)
+            progress_penalty_factor = 1.0 - ((expected_progress - progress) / 100.0) ** 0.5
             reward *= progress_penalty_factor
 
         if prev_point > 101 or next_point < 7:
@@ -281,27 +280,21 @@ class RewardCalculator:
             reward = -100
         elif progress > expected_progress:
             # reward if complete faster than expected
-            progress_reward_factor = 1.0 + ((progress - expected_progress) / 100.0)
+            progress_reward_factor = 1.0 + ((progress - expected_progress) / 100.0) ** 0.5
             reward *= progress_reward_factor
 
         reward = float(reward)
 
         self.prev_progress = progress
-        if progress == 100:
-            self.last_lap_steps = steps
 
         pprint(dict(
-            optimal_speed_penalty_factor=optimal_speed_penalty_factor,
-            reward=reward,
             steps=steps,
-            avg_speed=avg_speed,
             progress=progress,
-            track_len=track_len,
-            lap_time=step_start_time - self.lap_start_time,
             expected_progress=expected_progress,
             progress_reward_factor=progress_reward_factor,
             progress_penalty_factor=progress_penalty_factor,
-
+            distance_penalty_factor=distance_penalty_factor,
+            optimal_speed_penalty_factor=optimal_speed_penalty_factor,
         ))
         return reward
 
