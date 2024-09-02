@@ -197,7 +197,7 @@ def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
     return distance
 
 
-class RewardCalculator():
+class RewardCalculator:
     def __init__(self):
         self.prev_progress = 0
         self.avg_speed = 0
@@ -276,13 +276,13 @@ class RewardCalculator():
         #     reward *= avg_speed_penalty_factor
 
         # Heavily penalize reward if trying to take a shortcut to complete the lap
-        good_progress_reward = 0
+        progress_reward_factor = 1
         if progress == 100 and self.prev_progress < 95:
             reward = -100
         elif progress > expected_progress:
-            # Highly reward if complete faster than expected
-            good_progress_reward = (progress - expected_progress) * 10
-            reward += good_progress_reward
+            # reward if complete faster than expected
+            progress_reward_factor = 1.0 + ((progress - expected_progress) / 100.0)
+            reward *= progress_reward_factor
 
         reward = float(reward)
 
@@ -299,7 +299,7 @@ class RewardCalculator():
             track_len=track_len,
             lap_time=step_start_time - self.lap_start_time,
             expected_progress=expected_progress,
-            good_progress_reward=good_progress_reward,
+            progress_reward_factor=progress_reward_factor,
             progress_penalty_factor=progress_penalty_factor,
 
         ))
