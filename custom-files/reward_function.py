@@ -246,13 +246,8 @@ class RewardCalculator(object):
         prev_progress = self.prev_progress
         self.prev_progress = progress
 
-        if progress > (prev_progress + 5.0):
+        if progress > (prev_progress + 5.0) or is_offtrack:
             return 1e-5  # immediately discourage buggy laps
-
-        if is_offtrack or progress > (prev_progress + 3.0):
-            reward = self.accumulated_reward * -1 + 1e-3
-            self.accumulated_reward = 0
-            return reward
 
         reward = 1  # initial value
 
@@ -291,7 +286,7 @@ class RewardCalculator(object):
 
         steps_discount = (steps / STEPS_THRESHOLD) - (progress / 100)
         steps_reward = BASE_REWARD * (1.0 - steps_discount)
-        reward += STEPS_WEIGHT * zigzag_reward
+        reward += STEPS_WEIGHT * steps_reward
 
         reward = float(reward)
 
