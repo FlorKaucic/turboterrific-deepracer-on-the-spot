@@ -228,18 +228,14 @@ class RewardCalculator(object):
 
         reward = 1  # initial value
 
-        if (
-            prev_point > 101
-            or next_point < 7
-        ):
-            # Heavily penalize reward if the car doesn't go flat out on straight paths
-            min_speed_discount = (MIN_SPEED_ON_STRAIGHT_PATH - speed) / MIN_SPEED_ON_STRAIGHT_PATH
-            min_speed_reward = BASE_REWARD * (1.0 - min_speed_discount)
-        else:
-            min_speed_reward = 0
+        # Heavily penalize reward if the car doesn't go flat out on straight paths
+        isStraightPath = prev_point > 101 or next_point < 7
+        min_speed_discount = (MIN_SPEED_ON_STRAIGHT_PATH - speed) / MIN_SPEED_ON_STRAIGHT_PATH
+        min_speed_reward = (BASE_REWARD * (1.0 - min_speed_discount)) if isStraightPath else 0
 
         reward += MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT * min_speed_reward
 
+        # This contributes to total time (fewer steps ~= faster laps)
         steps_discount = (steps / STEPS_THRESHOLD) - (progress / 100)
         steps_reward = BASE_REWARD * (1.0 - steps_discount)
         reward += STEPS_WEIGHT * steps_reward
@@ -247,6 +243,11 @@ class RewardCalculator(object):
         reward = float(reward)
 
         pprint(dict(
+            isStraightPath=isStraightPath,
+            min_speed_on_straight_path_weight=MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT,
+            min_speed_reward=min_speed_reward,
+            steps_reward=steps_reward,
+            steps_weight=STEPS_WEIGHT,
         ))
 
         return reward
