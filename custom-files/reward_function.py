@@ -306,6 +306,7 @@ class RewardCalculator(object):
                 MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT,
                 RACING_LINE_WEIGHT,
                 SPEED_WEIGHT,
+                STEPS_WEIGHT,
                 ZIGZAG_ON_STRAIGHT_PATH_WEIGHT
             ],
             zigzag_reward=zigzag_reward,
