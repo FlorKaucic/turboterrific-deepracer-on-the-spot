@@ -213,60 +213,20 @@ class RewardCalculator(object):
 
     def reward_function(self, params):
         # Read input parameters
-        x, y = params["x"], params["y"]
-        track_width = params["track_width"]
         speed = params["speed"]
-        abs_steering = abs(params["steering_angle"])  # Only need the absolute steering angle
-        all_wheels_on_track = params['all_wheels_on_track']
         is_offtrack = params['is_offtrack']
         steps = params['steps']
         progress = params['progress']
         prev_point, next_point = params['closest_waypoints'][0], params['closest_waypoints'][1]
 
-        # Get closest indexes for racing line (and distances to all points on racing line)
-        closest_index, second_closest_index = closest_2_racing_points_index(
-            racing_line, [x, y]
-        )
-
-        # Get optimal [x, y] for closest and second closest index
-        optimals = racing_line[closest_index]
-        optimals_second = racing_line[second_closest_index]
-
-        # Extract optimal speed
-        optimal_speed = optimals[2]
-
-        # Calculate distance to optimal racing line to use this one for rewards
-        # (instead of distance to track center)
-        distance_to_racing_line = dist_to_racing_line(
-            optimals[0:2], optimals_second[0:2], [x, y]
-        )
-        distance_to_racing_line_pct = min(distance_to_racing_line / (0.5 * track_width), 0.99)
-
         # REWARD LOGIC:
         prev_progress = self.prev_progress
         self.prev_progress = progress
 
-        if progress > (prev_progress + 5.0):
+        if progress > (prev_progress + 3.0) or is_offtrack:
             return 1e-5  # immediately discourage buggy laps
 
-        if is_offtrack or progress > (prev_progress + 3.0):
-            reward = self.accumulated_reward * -1 + 1e-3
-            self.accumulated_reward = 0
-            return reward
-
         reward = 1  # initial value
-
-        # affecting reward based on distance from the optimal line
-        racing_line_reward = BASE_REWARD * (1.0 - distance_to_racing_line_pct)
-        reward += RACING_LINE_WEIGHT * racing_line_reward
-
-        # if not all_wheels_on_track:
-        #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
-
-        # affect reward based on speed
-        speed_factor = (optimal_speed - speed) / optimal_speed
-        speed_reward = BASE_REWARD * min(1.0 - speed_factor, 1.2)  # allow up to 20% increase from 'optimal' speed
-        reward += SPEED_WEIGHT * speed_reward
 
         if (
             prev_point > 101
@@ -275,44 +235,19 @@ class RewardCalculator(object):
             # Heavily penalize reward if the car doesn't go flat out on straight paths
             min_speed_discount = (MIN_SPEED_ON_STRAIGHT_PATH - speed) / MIN_SPEED_ON_STRAIGHT_PATH
             min_speed_reward = BASE_REWARD * (1.0 - min_speed_discount)
-
-            # Penalize reward if the car is steering too much on straight paths
-            zigzag_discount = (
-                    (abs_steering - ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD) /
-                    ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD
-            )
-            zigzag_reward = BASE_REWARD * (1.0 - zigzag_discount)
         else:
             min_speed_reward = 0
-            zigzag_reward = 0
 
         reward += MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT * min_speed_reward
-        reward += ZIGZAG_ON_STRAIGHT_PATH_WEIGHT * zigzag_reward
 
         steps_discount = (steps / STEPS_THRESHOLD) - (progress / 100)
         steps_reward = BASE_REWARD * (1.0 - steps_discount)
-        reward += STEPS_WEIGHT * zigzag_reward
+        reward += STEPS_WEIGHT * steps_reward
 
         reward = float(reward)
 
         pprint(dict(
-            accumulated_reward=self.accumulated_reward,
-            min_speed_reward=min_speed_reward,
-            optimals=optimals,
-            racing_line_reward=racing_line_reward,
-            speed_reward=speed_reward,
-            steps_reward=steps_reward,
-            weights=[
-                MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT,
-                RACING_LINE_WEIGHT,
-                SPEED_WEIGHT,
-                STEPS_WEIGHT,
-                ZIGZAG_ON_STRAIGHT_PATH_WEIGHT
-            ],
-            zigzag_reward=zigzag_reward,
         ))
-
-        self.accumulated_reward += reward
 
         return reward
 
