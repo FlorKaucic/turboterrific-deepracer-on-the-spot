@@ -6,35 +6,35 @@
         },
         {
             "steering_angle": -20.1147,
-            "speed": 1.3189
+            "speed": 1.4275
         },
         {
             "steering_angle": -16.7907,
-            "speed": 1.8043
+            "speed": 2.0
         },
         {
             "steering_angle": -10.131,
-            "speed": 2.5
+            "speed": 2.9139
         },
         {
             "steering_angle": -9.4186,
-            "speed": 3.2203
+            "speed": 3.7726
         },
         {
             "steering_angle": -7.3778,
-            "speed": 1.2887
+            "speed": 1.5316
         },
         {
             "steering_angle": -5.7557,
-            "speed": 1.7182
+            "speed": 2.065
         },
         {
             "steering_angle": -3.4715,
-            "speed": 2.0849
+            "speed": 2.5458
         },
         {
             "steering_angle": -0.1215,
-            "speed": 1.5171
+            "speed": 1.8948
         },
         {
             "steering_angle": 0,
@@ -42,49 +42,48 @@
         },
         {
             "steering_angle": 4.0214,
-            "speed": 2.4889
+            "speed": 3.0277
         },
         {
             "steering_angle": 4.3822,
-            "speed": 2.9327
+            "speed": 3.5587
         },
         {
             "steering_angle": 4.3989,
-            "speed": 1.2817
+            "speed": 1.555
         },
         {
             "steering_angle": 5.7524,
-            "speed": 3.4508
+            "speed": 4.148
         },
         {
             "steering_angle": 6.0488,
-            "speed": 1.7463
+            "speed": 2.09
         },
         {
             "steering_angle": 8.7787,
-            "speed": 2.1158
+            "speed": 2.49
         },
         {
             "steering_angle": 13.3363,
-            "speed": 1.5123
+            "speed": 1.7223
         },
         {
             "steering_angle": 13.907,
-            "speed": 1.2609
+            "speed": 1.43
         },
         {
             "steering_angle": 20.1021,
-            "speed": 1.8563
+            "speed": 2.0
         },
         {
             "steering_angle": 25.3806,
-            "speed": 1.3098
+            "speed": 1.36
         },
         {
             "steering_angle": 30.0,
             "speed": 1.2
         }
-        
     ],
     "sensor": [
     "FRONT_FACING_CAMERA"
