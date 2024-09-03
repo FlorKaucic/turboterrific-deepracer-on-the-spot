@@ -258,7 +258,7 @@ class RewardCalculator:
         expected_progress = (steps / TOTAL_NUM_STEPS) * 100
         progress_penalty_factor = 1
         if (steps % 20) == 0 and progress < expected_progress:
-            progress_penalty_factor = 1.0 - ((expected_progress - progress) / 100.0) ** 0.5
+            progress_penalty_factor = 1.0 - ((expected_progress - progress) / 100.0)
             reward *= progress_penalty_factor
 
         if prev_point > 101 or next_point < 7:
@@ -275,7 +275,7 @@ class RewardCalculator:
             reward = -100
         elif progress > expected_progress:
             # reward if complete faster than expected
-            progress_reward_factor = 1.0 + ((progress - expected_progress) / 10.0)
+            progress_reward_factor = 1.0 + ((progress - expected_progress) / 100.0)
             reward *= progress_reward_factor
 
         reward = float(reward)
