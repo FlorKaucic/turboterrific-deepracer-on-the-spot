@@ -3,7 +3,7 @@ from pprint import pprint
 
 # thresholds
 MIN_SPEED_ON_STRAIGHT_PATH = 4.5
-STEPS_THRESHOLD = 230
+STEPS_THRESHOLD = 220
 
 # weights
 MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT = 0.5
@@ -242,6 +242,7 @@ class RewardCalculator(object):
             isStraightPath=isStraightPath,
             min_speed_on_straight_path_weight=MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT,
             min_speed_reward=min_speed_reward,
+            steps_discount=steps_discount,
             steps_reward=steps_reward,
             steps_weight=STEPS_WEIGHT,
         ))
