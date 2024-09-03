@@ -232,7 +232,7 @@ class RewardCalculator(object):
         reward += MIN_SPEED_ON_STRAIGHT_PATH_WEIGHT * min_speed_reward
 
         # This contributes to total time (fewer steps ~= faster laps)
-        steps_discount = (steps / STEPS_THRESHOLD) - (progress / 100)
+        steps_discount = (steps / STEPS_THRESHOLD) / (progress / 100)
         steps_reward = BASE_REWARD * (1.0 - steps_discount)
         reward += STEPS_WEIGHT * steps_reward
 
