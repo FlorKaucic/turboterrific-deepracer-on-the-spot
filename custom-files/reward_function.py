@@ -5,7 +5,7 @@ from pprint import pprint
 ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 10
 MIN_SPEED_ON_STRAIGHT_PATH = 4.0
 TOTAL_NUM_STEPS = 220
-OPTIMAL_SPEED = 2.27
+MAX_DISTANCE_FROM_OPTIMAL=15
 
 # optimal racing line for 2022_reinvent_champ_ccw
 racing_line = [
@@ -200,9 +200,6 @@ def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
 class RewardCalculator:
     def __init__(self):
         self.prev_progress = 0
-        self.avg_speed = 0
-        self.start_time = time.time()
-        self.lap_start_time = time.time()
 
     def calculate_reward(self, params):
         # Read input parameters
@@ -210,18 +207,10 @@ class RewardCalculator:
         track_width = params["track_width"]
         speed = params["speed"]
         abs_steering = abs(params["steering_angle"])  # Only need the absolute steering angle
-        all_wheels_on_track = params['all_wheels_on_track']
         is_offtrack = params['is_offtrack']
         progress = params["progress"]
         steps = params["steps"]
-        track_len = params['track_length']
         prev_point, next_point = params['closest_waypoints'][0], params['closest_waypoints'][1]
-        current_step_len = progress - self.prev_progress
-
-        if progress < self.prev_progress:
-            self.lap_start_time = time.time()
-
-        step_start_time = time.time()
 
         # Get closest indexes for racing line (and distances to all points on racing line)
         closest_index, second_closest_index = closest_2_racing_points_index(
@@ -232,27 +221,18 @@ class RewardCalculator:
         optimals = racing_line[closest_index]
         optimals_second = racing_line[second_closest_index]
 
-        # Extract optimal speed
-        optimal_speed = optimals[2]
-
-        # Calculate distance to optimal racing line to use this one for rewards
-        # (instead of distance to track center)
-        distance_to_racing_line = dist_to_racing_line(
-            optimals[0:2], optimals_second[0:2], [x, y]
-        )
-        distance_to_racing_line_pct = distance_to_racing_line / (0.5 * track_width)
-
         # REWARD LOGIC:
         reward = 1e-3 if is_offtrack else 1  # initial value
 
-        distance_penalty_factor = 1.0 - distance_to_racing_line_pct
-        reward *= distance_penalty_factor  # affecting reward based on distance from the optimal line
+        # Calculate distance to optimal racing line to use this one for rewards
+        distance_to_racing_line = dist_to_racing_line(
+            optimals[0:2], optimals_second[0:2], [x, y]
+        )
+        distance_reward = 1 - distance_to_racing_line / (0.5 * track_width) ** 0.4
 
-        # if not all_wheels_on_track:
-        #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
-
-        optimal_speed_penalty_factor = (1.0 - abs((optimal_speed - speed) / optimal_speed))
-        reward *= optimal_speed_penalty_factor  # affect reward based on speed
+        # Extract optimal speed
+        optimal_speed = optimals[2]
+        speed_reward = 1 - abs((optimal_speed - speed) / optimal_speed) ** 0.5
 
         # Penalize reward if the car pass every 50 steps slower than expected
         expected_progress = (steps / TOTAL_NUM_STEPS) * 100
