@@ -4,7 +4,7 @@ from pprint import pprint
 # thresholds
 ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 10
 MIN_SPEED_ON_STRAIGHT_PATH = 4.0
-TOTAL_NUM_STEPS = 229
+TOTAL_NUM_STEPS = 220
 OPTIMAL_SPEED = 2.27
 
 # optimal racing line for 2022_reinvent_champ_ccw
@@ -269,18 +269,13 @@ class RewardCalculator:
                 # Penalize reward if the car is steering too much on straight paths
                 reward *= 0.6
 
-        avg_speed = (track_len * progress / 100) / (step_start_time - self.lap_start_time)
-        # if avg_speed < OPTIMAL_SPEED:
-        #     avg_speed_penalty_factor = 1.0 - (OPTIMAL_SPEED - avg_speed)/OPTIMAL_SPEED
-        #     reward *= avg_speed_penalty_factor
-
         # Heavily penalize reward if trying to take a shortcut to complete the lap
         progress_reward_factor = 1
         if progress == 100 and self.prev_progress < 95:
             reward = -100
         elif progress > expected_progress:
             # reward if complete faster than expected
-            progress_reward_factor = 1.0 + ((progress - expected_progress) / 100.0) ** 0.5
+            progress_reward_factor = 1.0 + ((progress - expected_progress) / 10.0)
             reward *= progress_reward_factor
 
         reward = float(reward)
