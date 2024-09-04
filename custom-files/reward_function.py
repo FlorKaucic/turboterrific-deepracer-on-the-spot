@@ -221,8 +221,6 @@ class RewardCalculator:
         if progress < self.prev_progress:
             self.lap_start_time = time.time()
 
-        step_start_time = time.time()
-
         # Get closest indexes for racing line (and distances to all points on racing line)
         closest_index, second_closest_index = closest_2_racing_points_index(
             racing_line, [x, y]
@@ -235,31 +233,39 @@ class RewardCalculator:
         # Extract optimal speed
         optimal_speed = optimals[2]
 
+        # REWARD LOGIC:
+        reward = 1e-3 if is_offtrack else 1  # initial value
+
         # Calculate distance to optimal racing line to use this one for rewards
         # (instead of distance to track center)
         distance_to_racing_line = dist_to_racing_line(
             optimals[0:2], optimals_second[0:2], [x, y]
         )
-        distance_to_racing_line_pct = distance_to_racing_line / (0.5 * track_width)
 
-        # REWARD LOGIC:
-        reward = 1e-3 if is_offtrack else 1  # initial value
+        distance_to_racing_line_pct = distance_to_racing_line / track_width
+        distance_reward = 1.0 - distance_to_racing_line_pct ** 0.4
+        # reward *= distance_penalty_factor  # affecting reward based on distance from the optimal line
 
-        distance_penalty_factor = 1.0 - distance_to_racing_line_pct
-        reward *= distance_penalty_factor  # affecting reward based on distance from the optimal line
+        max_speed_diff = 0.2
+        speed_diff = abs(optimal_speed - speed)
+        optimal_speed_reward = max(1e-3, 1 - ((speed_diff / max_speed_diff) ** 0.4))
 
-        # if not all_wheels_on_track:
-        #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
+        # optimal_speed_reward = 1.0 - (optimal_speed - speed) / optimal_speed
+        # reward *= optimal_speed_penalty_factor  # affect reward based on speed
 
-        optimal_speed_penalty_factor = (1.0 - abs((optimal_speed - speed) / optimal_speed))
-        reward *= optimal_speed_penalty_factor  # affect reward based on speed
-
-        # Penalize reward if the car pass every 50 steps slower than expected
         expected_progress = (steps / TOTAL_NUM_STEPS) * 100
-        progress_penalty_factor = 1
-        if (steps % 20) == 0 and progress < expected_progress:
-            progress_penalty_factor = 1.0 - ((expected_progress - progress) / 100.0)
-            reward *= progress_penalty_factor
+        progress_reward = 1
+
+        if progress > expected_progress:
+            # reward if complete faster than expected
+            progress_reward = 1.0 + ((progress - expected_progress) / 100.0) ** 0.4
+            # reward *= progress_reward_factor
+        elif (steps % 20) == 0 and progress < expected_progress:
+            # Penalize reward if the car pass every 20 steps slower than expected
+            progress_reward = 1.0 - ((expected_progress - progress) / 100.0) ** 0.4
+            # reward *= progress_penalty_factor
+
+        reward = distance_reward + optimal_speed_reward + progress_reward
 
         if prev_point > 101 or next_point < 7:
             if speed < MIN_SPEED_ON_STRAIGHT_PATH:
@@ -267,16 +273,11 @@ class RewardCalculator:
                 reward *= 0.5
             if abs_steering > ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD:
                 # Penalize reward if the car is steering too much on straight paths
-                reward *= 0.6
+                reward *= 0.7
 
-        # Heavily penalize reward if trying to take a shortcut to complete the lap
-        progress_reward_factor = 1
         if progress == 100 and self.prev_progress < 95:
+            # Heavily penalize reward if trying to take a shortcut to complete the lap
             reward = -100
-        elif progress > expected_progress:
-            # reward if complete faster than expected
-            progress_reward_factor = 1.0 + ((progress - expected_progress) / 100.0)
-            reward *= progress_reward_factor
 
         reward = float(reward)
 
