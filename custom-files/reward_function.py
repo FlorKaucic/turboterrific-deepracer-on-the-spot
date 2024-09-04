@@ -260,7 +260,7 @@ class RewardCalculator:
             # reward if complete faster than expected
             progress_reward = 1.0 + ((progress - expected_progress) / 100.0) ** 0.4
             # reward *= progress_reward_factor
-        elif (steps % 20) == 0 and progress < expected_progress:
+        elif (steps % 1) == 0 and progress < expected_progress:
             # Penalize reward if the car pass every 20 steps slower than expected
             progress_reward = 1.0 - ((expected_progress - progress) / 100.0) ** 0.4
             # reward *= progress_penalty_factor
@@ -293,7 +293,7 @@ class RewardCalculator:
             speed=speed,
             distance_to_racing_line=distance_to_racing_line,
             distance_reward=distance_reward,
-            distnace_expected1=optimals[0:2],
+            distance_expected1=optimals[0:2],
             distance_expected2=optimals_second[0:2],
             distance_actual=[x, y],
             track_width=track_width,
