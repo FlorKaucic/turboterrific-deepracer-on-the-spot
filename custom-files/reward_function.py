@@ -286,11 +286,17 @@ class RewardCalculator:
         pprint(dict(
             steps=steps,
             progress=progress,
-            expected_progress=expected_progress,
-            progress_reward_factor=progress_reward_factor,
-            progress_penalty_factor=progress_penalty_factor,
-            distance_penalty_factor=distance_penalty_factor,
-            optimal_speed_penalty_factor=optimal_speed_penalty_factor,
+            progress_expected=expected_progress,
+            progress_reward=progress_reward,
+            speed_reward=optimal_speed_reward,
+            speed_optimal=optimal_speed,
+            speed=speed,
+            distance_to_racing_line=distance_to_racing_line,
+            distance_reward=distance_reward,
+            distnace_expected1=optimals[0:2],
+            distance_expected2=optimals_second[0:2],
+            distance_actual=[x, y],
+            track_width=track_width,
         ))
         return reward
 
