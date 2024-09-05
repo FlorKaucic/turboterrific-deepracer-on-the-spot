@@ -2,7 +2,7 @@ import time
 from pprint import pprint
 
 # thresholds
-ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 10
+ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 5
 MIN_SPEED_ON_STRAIGHT_PATH = 4.0
 TOTAL_NUM_STEPS = 220
 OPTIMAL_SPEED = 2.27
@@ -240,7 +240,7 @@ class RewardCalculator:
         distance_to_racing_line = dist_to_racing_line(
             optimals[0:2], optimals_second[0:2], [x, y]
         )
-        distance_to_racing_line_pct = distance_to_racing_line / (0.5 * track_width)
+        distance_to_racing_line_pct = max(distance_to_racing_line / (0.5 * track_width), 0.99)
 
         # REWARD LOGIC:
         reward = 1e-3 if is_offtrack else 1  # initial value
@@ -251,7 +251,7 @@ class RewardCalculator:
         # if not all_wheels_on_track:
         #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
 
-        optimal_speed_penalty_factor = (1.0 - abs((optimal_speed - speed) / optimal_speed))
+        optimal_speed_penalty_factor = (1.0 - (optimal_speed - speed) / optimal_speed)
         reward *= optimal_speed_penalty_factor  # affect reward based on speed
 
         # Penalize reward if the car pass every 50 steps slower than expected
@@ -264,7 +264,7 @@ class RewardCalculator:
         if prev_point > 101 or next_point < 7:
             if speed < MIN_SPEED_ON_STRAIGHT_PATH:
                 # Heavily penalize reward if the car doesn't go flat out on straight paths
-                reward *= 0.5
+                reward *= (1.0 - (MIN_SPEED_ON_STRAIGHT_PATH - speed) / MIN_SPEED_ON_STRAIGHT_PATH)
             if abs_steering > ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD:
                 # Penalize reward if the car is steering too much on straight paths
                 reward *= 0.6
