@@ -251,7 +251,8 @@ class RewardCalculator:
         # if not all_wheels_on_track:
         #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
 
-        optimal_speed_penalty_factor = (1.0 - (optimal_speed - speed) / optimal_speed)
+        speed_pct = (optimal_speed - speed) / optimal_speed
+        optimal_speed_penalty_factor = (1.0 - speed_pct)
         reward *= optimal_speed_penalty_factor  # affect reward based on speed
 
         # Penalize reward if the car pass every 50 steps slower than expected
@@ -264,7 +265,8 @@ class RewardCalculator:
         if prev_point > 101 or next_point < 7:
             if speed < MIN_SPEED_ON_STRAIGHT_PATH:
                 # Heavily penalize reward if the car doesn't go flat out on straight paths
-                reward *= (1.0 - (MIN_SPEED_ON_STRAIGHT_PATH - speed) / MIN_SPEED_ON_STRAIGHT_PATH)
+                min_speed_straight_factor = (MIN_SPEED_ON_STRAIGHT_PATH - speed) / MIN_SPEED_ON_STRAIGHT_PATH
+                reward *= (1.0 - min_speed_straight_factor)
             if abs_steering > ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD:
                 # Penalize reward if the car is steering too much on straight paths
                 reward *= 0.6
@@ -282,14 +284,18 @@ class RewardCalculator:
 
         self.prev_progress = progress
 
+        # first letter is to sort it in a certain way as it uses alphabetical order
         pprint(dict(
-            steps=steps,
-            progress=progress,
-            expected_progress=expected_progress,
-            progress_reward_factor=progress_reward_factor,
-            progress_penalty_factor=progress_penalty_factor,
-            distance_penalty_factor=distance_penalty_factor,
-            optimal_speed_penalty_factor=optimal_speed_penalty_factor,
+            a_expected_progress=expected_progress,
+            a_is_bug=(progress == 100 and self.prev_progress < 95),
+            a_position=[x,y],
+            b_distance_to_racing_line_pct=distance_to_racing_line_pct,
+            b_speed_pct=speed_pct,
+            f_min_speed_straight_factor=min_speed_straight_factor,
+            f_progress_penalty_factor=progress_penalty_factor,
+            f_progress_reward_factor=progress_reward_factor,
+            z_progress=progress,
+            z_steps=steps,
         ))
         return reward
 
