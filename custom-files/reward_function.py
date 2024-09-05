@@ -240,7 +240,7 @@ class RewardCalculator:
         distance_to_racing_line = dist_to_racing_line(
             optimals[0:2], optimals_second[0:2], [x, y]
         )
-        distance_to_racing_line_pct = max(distance_to_racing_line / (0.5 * track_width), 0.99)
+        distance_to_racing_line_pct = min(distance_to_racing_line / (0.5 * track_width), 0.99)
 
         # REWARD LOGIC:
         reward = 1e-3 if is_offtrack else 1  # initial value
