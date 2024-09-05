@@ -262,6 +262,7 @@ class RewardCalculator:
             progress_penalty_factor = 1.0 - ((expected_progress - progress) / 100.0) ** 0.5
             reward *= progress_penalty_factor
 
+        min_speed_straight_factor = 0
         if prev_point > 101 or next_point < 7:
             if speed < MIN_SPEED_ON_STRAIGHT_PATH:
                 # Heavily penalize reward if the car doesn't go flat out on straight paths
