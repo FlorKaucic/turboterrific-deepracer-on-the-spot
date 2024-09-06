@@ -1,11 +1,8 @@
-import time
 from pprint import pprint
 
 # thresholds
-ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 5
 MIN_SPEED_ON_STRAIGHT_PATH = 4.0
-TOTAL_NUM_STEPS = 220
-OPTIMAL_SPEED = 2.27
+FAST_LAP_STEPS = 220
 
 # optimal racing line for 2022_reinvent_champ_ccw
 racing_line = [
@@ -199,29 +196,17 @@ def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
 
 class RewardCalculator:
     def __init__(self):
+        self.accumulated_reward = 0
         self.prev_progress = 0
-        self.avg_speed = 0
-        self.start_time = time.time()
-        self.lap_start_time = time.time()
 
     def calculate_reward(self, params):
         # Read input parameters
         x, y = params["x"], params["y"]
         track_width = params["track_width"]
         speed = params["speed"]
-        abs_steering = abs(params["steering_angle"])  # Only need the absolute steering angle
-        all_wheels_on_track = params['all_wheels_on_track']
-        is_offtrack = params['is_offtrack']
         progress = params["progress"]
         steps = params["steps"]
-        track_len = params['track_length']
         prev_point, next_point = params['closest_waypoints'][0], params['closest_waypoints'][1]
-        current_step_len = progress - self.prev_progress
-
-        if progress < self.prev_progress:
-            self.lap_start_time = time.time()
-
-        step_start_time = time.time()
 
         # Get closest indexes for racing line (and distances to all points on racing line)
         closest_index, second_closest_index = closest_2_racing_points_index(
@@ -232,70 +217,54 @@ class RewardCalculator:
         optimals = racing_line[closest_index]
         optimals_second = racing_line[second_closest_index]
 
-        # Extract optimal speed
-        optimal_speed = optimals[2]
-
         # Calculate distance to optimal racing line to use this one for rewards
         # (instead of distance to track center)
         distance_to_racing_line = dist_to_racing_line(
             optimals[0:2], optimals_second[0:2], [x, y]
         )
-        distance_to_racing_line_pct = min(distance_to_racing_line / (0.5 * track_width), 0.99)
 
         # REWARD LOGIC:
-        reward = 1e-3 if is_offtrack else 1  # initial value
+        reward = 1  # initial value
 
-        distance_penalty_factor = 1.0 - distance_to_racing_line_pct
-        reward *= distance_penalty_factor  # affecting reward based on distance from the optimal line
+        # affecting reward based on distance from the optimal line
+        distance_penalty_factor = max((track_width - distance_to_racing_line) / track_width, 1e-3)
+        reward *= distance_penalty_factor
 
-        # if not all_wheels_on_track:
-        #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
+        isStraightPath = prev_point > 103 or next_point < 5
+        min_speed_straight_factor = max(speed / MIN_SPEED_ON_STRAIGHT_PATH, 0.01) if isStraightPath else 1
+        reward *= min_speed_straight_factor
 
-        speed_pct = (optimal_speed - speed) / optimal_speed
-        optimal_speed_penalty_factor = (1.0 - speed_pct)
-        reward *= optimal_speed_penalty_factor  # affect reward based on speed
+        expected_steps = FAST_LAP_STEPS * progress / 100
+        steps_difference = expected_steps - steps / 100
+        steps_reward = reward * steps_difference
+        reward += steps_reward
 
-        # Penalize reward if the car pass every 50 steps slower than expected
-        expected_progress = (steps / TOTAL_NUM_STEPS) * 100
-        progress_penalty_factor = 1
-        if (steps % 20) == 0 and progress < expected_progress:
-            progress_penalty_factor = 1.0 - ((expected_progress - progress) / 100.0) ** 0.5
-            reward *= progress_penalty_factor
-
-        if prev_point > 101 or next_point < 7:
-            if speed < MIN_SPEED_ON_STRAIGHT_PATH:
-                # Heavily penalize reward if the car doesn't go flat out on straight paths
-                min_speed_straight_factor = (MIN_SPEED_ON_STRAIGHT_PATH - speed) / MIN_SPEED_ON_STRAIGHT_PATH
-                reward *= (1.0 - min_speed_straight_factor)
-            if abs_steering > ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD:
-                # Penalize reward if the car is steering too much on straight paths
-                reward *= 0.6
-
-        # Heavily penalize reward if trying to take a shortcut to complete the lap
-        progress_reward_factor = 1
+        # Remove all rewards if trying to take a shortcut to complete the lap
         if progress == 100 and self.prev_progress < 95:
-            reward = -100
-        elif progress > expected_progress:
-            # reward if complete faster than expected
-            progress_reward_factor = 1.0 + ((progress - expected_progress) / 10.0)
-            reward *= progress_reward_factor
+            reward = self.accumulated_reward * -1
 
         reward = float(reward)
 
         self.prev_progress = progress
+        self.accumulated_reward += reward
 
-        # first letter is to sort it in a certain way as it uses alphabetical order
         pprint(dict(
-            a_expected_progress=expected_progress,
-            a_is_bug=(progress == 100 and self.prev_progress < 95),
-            a_position=[x,y],
-            b_distance_to_racing_line_pct=distance_to_racing_line_pct,
-            b_speed_pct=speed_pct,
-            f_min_speed_straight_factor=min_speed_straight_factor,
-            f_progress_penalty_factor=progress_penalty_factor,
-            f_progress_reward_factor=progress_reward_factor,
-            z_progress=progress,
-            z_steps=steps,
+            # calculated
+            calculated_distance=distance_to_racing_line,
+            calculated_is_bug=progress == 100 and self.prev_progress < 95,
+            calculated_is_straight_path=isStraightPath,
+            calculated_optimals=optimals,
+            calculated_steps=expected_steps,
+            # factors
+            factor_distance_penalty=distance_penalty_factor,
+            factor_min_speed=min_speed_straight_factor,
+            factor_steps_reward=steps_reward,
+            # given
+            given_coordinates=[x, y],
+            given_steps=steps,
+            given_track_width=track_width,
+            # status
+            status_accumulated_reward=self.accumulated_reward,
         ))
         return reward
 
@@ -306,3 +275,193 @@ calculator = RewardCalculator()
 def reward_function(params):
     # Read input parameters
     return calculator.calculate_reward(params)
+
+
+def test():
+    """
+    To run tests:
+    import importlib
+    mod = importlib.import_module("custom-files.reward_function")
+    mod.test()
+    """
+    # BASELINE
+    params_baseline = dict(
+        x=0.5,
+        y=0.5,
+        track_width=2,
+        speed=5.0,
+        progress=2,
+        steps=4,
+        closest_waypoints=[1, 2],
+    )
+
+    # BASED ON DISTANCE
+    params_further_away = dict(
+        x=0.45,
+        y=0.48,
+        track_width=2,
+        speed=5.0,
+        progress=2,
+        steps=4,
+        closest_waypoints=[1, 2],
+    )
+
+    params_closer_to_raceline = dict(
+        x=0.5,
+        y=0.55,
+        track_width=2,
+        speed=5.0,
+        progress=2,
+        steps=4,
+        closest_waypoints=[1, 2],
+    )
+
+    reward_baseline = reward_function(params_baseline)
+
+    reward_further_away = reward_function(params_further_away)
+    reward_closer_to_raceline = reward_function(params_closer_to_raceline)
+
+    assert (reward_further_away <= reward_baseline <= reward_closer_to_raceline)
+
+    # BASED ON DISTANCE
+    params_speed_slower = dict(
+        x=0.5,
+        y=0.5,
+        track_width=2,
+        speed=3.0,
+        progress=2,
+        steps=4,
+        closest_waypoints=[1, 2],
+    )
+
+    params_speed_faster = dict(
+        x=0.5,
+        y=0.5,
+        track_width=2,
+        speed=5.5,
+        progress=2,
+        steps=4,
+        closest_waypoints=[1, 2],
+    )
+
+    reward_speed_slower = reward_function(params_speed_slower)
+    reward_speed_faster = reward_function(params_speed_faster)
+
+    assert (reward_speed_slower <= reward_baseline <= reward_speed_faster)
+
+    # BASED ON STEPS
+    params_steps_slower = dict(
+        x=0.5,
+        y=0.5,
+        track_width=2,
+        speed=5.0,
+        progress=2,
+        steps=5,
+        closest_waypoints=[1, 2],
+    )
+
+    params_steps_faster = dict(
+        x=0.5,
+        y=0.5,
+        track_width=2,
+        speed=5.0,
+        progress=2,
+        steps=3,
+        closest_waypoints=[1, 2],
+    )
+
+    reward_steps_slower = reward_function(params_steps_slower)
+    reward_steps_faster = reward_function(params_steps_faster)
+
+    assert (reward_steps_slower <= reward_baseline <= reward_steps_faster)
+    
+    # OUT OF BOUNDS?
+    # BASED ON DISTANCE
+    params_distance_upper = dict(
+        x=5,
+        y=5,
+        track_width=2,
+        speed=5.0,
+        progress=2,
+        steps=4,
+        closest_waypoints=[1, 2],
+    )
+
+    params_distance_lower = dict(
+        x=-5,
+        y=-5,
+        track_width=2,
+        speed=5.0,
+        progress=2,
+        steps=4,
+        closest_waypoints=[1, 2],
+    )
+
+    reward_distance_upper = reward_function(params_distance_upper)
+    reward_distance_lower = reward_function(params_distance_lower)
+
+    assert(reward_distance_upper < reward_further_away)
+    assert(reward_distance_lower < reward_further_away)
+
+    # BASED ON SPEED
+    params_speed_extreme = dict(
+        x=0.5,
+        y=0.5,
+        track_width=2,
+        speed=15.0,
+        progress=2,
+        steps=4,
+        closest_waypoints=[1, 2],
+    )
+
+    reward_speed_extreme = reward_function(params_speed_extreme)
+
+    assert (reward_speed_extreme > reward_speed_faster)
+
+    params_speed_stopped = dict(
+        x=0.5,
+        y=0.5,
+        track_width=2,
+        speed=0.0,
+        progress=2,
+        steps=4,
+        closest_waypoints=[1, 2],
+    )
+
+    reward_speed_stopped = reward_function(params_speed_stopped)
+
+    assert (reward_speed_stopped < reward_speed_slower)
+
+    # BASED ON STEPS
+    params_steps_extreme = dict(
+        x=0.5,
+        y=0.5,
+        track_width=2,
+        speed=5.0,
+        progress=2,
+        steps=50,
+        closest_waypoints=[1, 2],
+    )
+    reward_steps_extreme = reward_function(params_steps_extreme)
+
+    assert (reward_steps_extreme < reward_steps_slower)
+
+    # assert none is 0
+    assert (reward_baseline != 0)
+    assert (params_further_away != 0)
+    assert (params_closer_to_raceline != 0)
+    assert (reward_speed_slower != 0)
+    assert (reward_speed_faster != 0)
+    assert (reward_steps_slower != 0)
+    assert (reward_steps_faster != 0)
+    assert (reward_distance_upper != 0)
+    assert (reward_distance_lower != 0)
+    assert (reward_speed_extreme != 0)
+    assert (reward_speed_stopped != 0)
+    assert (reward_steps_extreme != 0)
+
+    print("All done!")
+
+
+if __name__ == '__main__':
+    test()
