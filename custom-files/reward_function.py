@@ -2,7 +2,7 @@ import time
 from pprint import pprint
 
 # thresholds
-ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 5
+ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD = 10
 MIN_SPEED_ON_STRAIGHT_PATH = 4.0
 TOTAL_NUM_STEPS = 220
 OPTIMAL_SPEED = 2.27
@@ -240,7 +240,7 @@ class RewardCalculator:
         distance_to_racing_line = dist_to_racing_line(
             optimals[0:2], optimals_second[0:2], [x, y]
         )
-        distance_to_racing_line_pct = min(distance_to_racing_line / (0.5 * track_width), 0.99)
+        distance_to_racing_line_pct = distance_to_racing_line / track_width
 
         # REWARD LOGIC:
         reward = 1e-3 if is_offtrack else 1  # initial value
@@ -251,8 +251,7 @@ class RewardCalculator:
         # if not all_wheels_on_track:
         #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
 
-        speed_pct = (optimal_speed - speed) / optimal_speed
-        optimal_speed_penalty_factor = (1.0 - speed_pct)
+        optimal_speed_penalty_factor = 1.0 - abs((optimal_speed - speed) / 5)
         reward *= optimal_speed_penalty_factor  # affect reward based on speed
 
         # Penalize reward if the car pass every 50 steps slower than expected
@@ -262,12 +261,10 @@ class RewardCalculator:
             progress_penalty_factor = 1.0 - ((expected_progress - progress) / 100.0) ** 0.5
             reward *= progress_penalty_factor
 
-        min_speed_straight_factor = 0
         if prev_point > 101 or next_point < 7:
             if speed < MIN_SPEED_ON_STRAIGHT_PATH:
                 # Heavily penalize reward if the car doesn't go flat out on straight paths
-                min_speed_straight_factor = (MIN_SPEED_ON_STRAIGHT_PATH - speed) / MIN_SPEED_ON_STRAIGHT_PATH
-                reward *= (1.0 - min_speed_straight_factor)
+                reward *= 0.5
             if abs_steering > ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD:
                 # Penalize reward if the car is steering too much on straight paths
                 reward *= 0.6
@@ -285,18 +282,17 @@ class RewardCalculator:
 
         self.prev_progress = progress
 
-        # first letter is to sort it in a certain way as it uses alphabetical order
         pprint(dict(
-            a_expected_progress=expected_progress,
-            a_is_bug=(progress == 100 and self.prev_progress < 95),
-            a_position=[x,y],
-            b_distance_to_racing_line_pct=distance_to_racing_line_pct,
-            b_speed_pct=speed_pct,
-            f_min_speed_straight_factor=min_speed_straight_factor,
-            f_progress_penalty_factor=progress_penalty_factor,
-            f_progress_reward_factor=progress_reward_factor,
-            z_progress=progress,
-            z_steps=steps,
+            a_steps=steps,
+            b_progress=progress,
+            b_expected_progress=expected_progress,
+            b_progress_reward_factor=progress_reward_factor,
+            b_progress_penalty_factor=progress_penalty_factor,
+            c_distance_penalty_factor=distance_penalty_factor,
+            c_distance_to_line=distance_to_racing_line,
+            d_optimal_speed=optimal_speed,
+            d_actual_speed=speed,
+            d_optimal_speed_penalty_factor=optimal_speed_penalty_factor,
         ))
         return reward
 
