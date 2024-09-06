@@ -120,7 +120,7 @@ racing_line = [
     [1.3148, -0.32004, 5.0, 0.06043],
     [1.11133, -0.09598, 5.0, 0.06053],
     [0.90941, 0.1299, 5.0, 0.0606],
-    [0.7082, 0.35669, 5.0, 0.06064]
+    [0.7082, 0.35669, 5.0, 0.06064],
 ]
 
 
@@ -184,12 +184,12 @@ def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
     # try-except in case a=0 (rare bug in DeepRacer)
     try:
         distance = abs(
-            -(a ** 4)
-            + 2 * (a ** 2) * (b ** 2)
-            + 2 * (a ** 2) * (c ** 2)
-            - (b ** 4)
-            + 2 * (b ** 2) * (c ** 2)
-            - (c ** 4)
+            -(a**4)
+            + 2 * (a**2) * (b**2)
+            + 2 * (a**2) * (c**2)
+            - (b**4)
+            + 2 * (b**2) * (c**2)
+            - (c**4)
         ) ** 0.5 / (2 * a)
     except:
         distance = b
@@ -205,99 +205,81 @@ class RewardCalculator:
         self.lap_start_time = time.time()
 
     def calculate_reward(self, params):
-        # Read input parameters
-        x, y = params["x"], params["y"]
-        track_width = params["track_width"]
-        speed = params["speed"]
-        abs_steering = abs(params["steering_angle"])  # Only need the absolute steering angle
-        all_wheels_on_track = params['all_wheels_on_track']
-        is_offtrack = params['is_offtrack']
-        progress = params["progress"]
-        steps = params["steps"]
-        track_len = params['track_length']
-        prev_point, next_point = params['closest_waypoints'][0], params['closest_waypoints'][1]
-        current_step_len = progress - self.prev_progress
-
-        if progress < self.prev_progress:
-            self.lap_start_time = time.time()
-
-        step_start_time = time.time()
-
         # Get closest indexes for racing line (and distances to all points on racing line)
         closest_index, second_closest_index = closest_2_racing_points_index(
-            racing_line, [x, y]
+            racing_line, [params["x"], params["y"]]
         )
 
         # Get optimal [x, y] for closest and second closest index
         optimals = racing_line[closest_index]
         optimals_second = racing_line[second_closest_index]
 
-        # Extract optimal speed
-        optimal_speed = optimals[2]
+        # Read input parameters
+        track_width = params["track_width"]
+        speed = params["speed"]
+        abs_steering = abs(
+            params["steering_angle"]
+        )  # Only need the absolute steering angle
+        all_wheels_on_track = params["all_wheels_on_track"]
+        closest_waypoints = params["closest_waypoints"]
+        prev_point = closest_waypoints[0]
+        next_point = closest_waypoints[1]
 
         # Calculate distance to optimal racing line to use this one for rewards
         # (instead of distance to track center)
         distance_to_racing_line = dist_to_racing_line(
-            optimals[0:2], optimals_second[0:2], [x, y]
+            optimals[0:2], optimals_second[0:2], [params["x"], params["y"]]
         )
-        distance_to_racing_line_pct = min(distance_to_racing_line / (0.5 * track_width), 0.99)
+        distance_to_racing_line_pct = distance_to_racing_line / (track_width)
 
-        # REWARD LOGIC:
-        reward = 1e-3 if is_offtrack else 1  # initial value
+        if params["is_offtrack"]:
+            # Heavily penalize if it goes out of track as it means its disqualified
+            reward = 1e-3
+            print("#TT# All wheels out of track! Reward: {}.".format(reward))
+        else:
+            # Give higher reward if the car is closer to center line and vice versa
 
-        distance_penalty_factor = 1.0 - distance_to_racing_line_pct
-        reward *= distance_penalty_factor  # affecting reward based on distance from the optimal line
+            # Original:
+            # reward = math.exp(-5*distance_to_racing_line_pct)
+            reward = 1 - distance_to_racing_line_pct
+            print(
+                "#TT# Reward after distance to racing line ({}): {}.".format(
+                    distance_to_racing_line_pct, reward
+                )
+            )
 
-        # if not all_wheels_on_track:
-        #     reward *= 0.7  # discouraging going out of track even if it's only one wheel
+            # Steering penality threshold, change the number based on your action space setting
+            # cambiar los waypoints para la nueva pista
+            if prev_point > 101 or next_point < 7:
+                if speed < MIN_SPEED_ON_STRAIGHT_PATH:
+                    # Heavily penalize reward if the car steers on straight paths
+                    reward *= 0.5
+                elif abs_steering > ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD:
+                    # Penalize reward if the car is steering too much
+                    reward *= 0.8
+            print(
+                "#TT# Reward after steering compensation ({}): {}.".format(
+                    abs_steering, reward
+                )
+            )
 
-        speed_pct = (optimal_speed - speed) / optimal_speed
-        optimal_speed_penalty_factor = (1.0 - speed_pct)
-        reward *= optimal_speed_penalty_factor  # affect reward based on speed
-
-        # Penalize reward if the car pass every 50 steps slower than expected
-        expected_progress = (steps / TOTAL_NUM_STEPS) * 100
-        progress_penalty_factor = 1
-        if (steps % 20) == 0 and progress < expected_progress:
-            progress_penalty_factor = 1.0 - ((expected_progress - progress) / 100.0) ** 0.5
-            reward *= progress_penalty_factor
-
-        min_speed_straight_factor = 0
-        if prev_point > 101 or next_point < 7:
-            if speed < MIN_SPEED_ON_STRAIGHT_PATH:
-                # Heavily penalize reward if the car doesn't go flat out on straight paths
-                min_speed_straight_factor = (MIN_SPEED_ON_STRAIGHT_PATH - speed) / MIN_SPEED_ON_STRAIGHT_PATH
-                reward *= (1.0 - min_speed_straight_factor)
-            if abs_steering > ABS_STEERING_ON_STRAIGHT_PATH_THRESHOLD:
-                # Penalize reward if the car is steering too much on straight paths
-                reward *= 0.6
-
-        # Heavily penalize reward if trying to take a shortcut to complete the lap
-        progress_reward_factor = 1
-        if progress == 100 and self.prev_progress < 95:
-            reward = -100
-        elif progress > expected_progress:
-            # reward if complete faster than expected
-            progress_reward_factor = 1.0 + ((progress - expected_progress) / 10.0)
-            reward *= progress_reward_factor
-
-        reward = float(reward)
-
-        self.prev_progress = progress
+            reward = float(reward)
 
         # first letter is to sort it in a certain way as it uses alphabetical order
-        pprint(dict(
-            a_expected_progress=expected_progress,
-            a_is_bug=(progress == 100 and self.prev_progress < 95),
-            a_position=[x,y],
-            b_distance_to_racing_line_pct=distance_to_racing_line_pct,
-            b_speed_pct=speed_pct,
-            f_min_speed_straight_factor=min_speed_straight_factor,
-            f_progress_penalty_factor=progress_penalty_factor,
-            f_progress_reward_factor=progress_reward_factor,
-            z_progress=progress,
-            z_steps=steps,
-        ))
+        # pprint(
+        #     dict(
+        #         a_expected_progress=expected_progress,
+        #         a_is_bug=(progress == 100 and self.prev_progress < 95),
+        #         a_position=[x, y],
+        #         b_distance_to_racing_line_pct=distance_to_racing_line_pct,
+        #         b_speed_pct=speed_pct,
+        #         f_min_speed_straight_factor=min_speed_straight_factor,
+        #         f_progress_penalty_factor=progress_penalty_factor,
+        #         f_progress_reward_factor=progress_reward_factor,
+        #         z_progress=progress,
+        #         z_steps=steps,
+        #     )
+        # )
         return reward
 
 
