@@ -234,8 +234,8 @@ class RewardCalculator:
         min_speed_straight_factor = max(speed / MIN_SPEED_ON_STRAIGHT_PATH, 0.01) if isStraightPath else 1
         reward *= min_speed_straight_factor
 
-        expected_steps = FAST_LAP_STEPS * progress / 100
-        steps_difference = expected_steps - steps / 100
+        expected_steps = (FAST_LAP_STEPS * progress) / 100
+        steps_difference = (expected_steps - steps) / 100
         steps_reward = reward * steps_difference
         reward += steps_reward
 
@@ -445,6 +445,19 @@ def test():
     reward_steps_extreme = reward_function(params_steps_extreme)
 
     assert (reward_steps_extreme < reward_steps_slower)
+
+    # BASED ON PROGRESS
+    params_big_progress = dict(
+        x=0.5,
+        y=0.5,
+        track_width=2,
+        speed=5.0,
+        progress=98,
+        steps=4,
+        closest_waypoints=[1, 2],
+    )
+
+    rewards_big_progress = reward_function(params_big_progress)
 
     # assert none is 0
     assert (reward_baseline != 0)
