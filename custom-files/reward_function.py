@@ -240,7 +240,8 @@ class RewardCalculator:
         reward += steps_reward
 
         # Remove all rewards if trying to take a shortcut to complete the lap
-        if progress == 100 and self.prev_progress < 95:
+        isBug = progress == 100 and self.prev_progress < 95
+        if isBug:
             reward = self.accumulated_reward * -1
 
         reward = float(reward)
@@ -251,7 +252,7 @@ class RewardCalculator:
         pprint(dict(
             # calculated
             calculated_distance=distance_to_racing_line,
-            calculated_is_bug=progress == 100 and self.prev_progress < 95,
+            calculated_is_bug=isBug,
             calculated_is_straight_path=isStraightPath,
             calculated_optimals=optimals,
             calculated_steps=expected_steps,
@@ -457,7 +458,8 @@ def test():
         closest_waypoints=[1, 2],
     )
 
-    rewards_big_progress = reward_function(params_big_progress)
+    reward_big_progress = reward_function(params_big_progress)
+    assert (reward_big_progress > reward_baseline)
 
     # assert none is 0
     assert (reward_baseline != 0)
@@ -472,6 +474,7 @@ def test():
     assert (reward_speed_extreme != 0)
     assert (reward_speed_stopped != 0)
     assert (reward_steps_extreme != 0)
+    assert (reward_big_progress != 0)
 
     print("All done!")
 
