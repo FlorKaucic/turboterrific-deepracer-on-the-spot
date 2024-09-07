@@ -224,25 +224,18 @@ class RewardCalculator:
         )
 
         # REWARD LOGIC:
-        reward = 1  # initial value
-
         # affecting reward based on distance from the optimal line
         distance_penalty_factor = max((track_width - distance_to_racing_line) / track_width, 1e-3)
-        reward *= distance_penalty_factor
+        optimal_line_reward = 50 * distance_penalty_factor
 
-        isStraightPath = prev_point > 103 or next_point < 5
-        min_speed_straight_factor = max(speed / MIN_SPEED_ON_STRAIGHT_PATH, 0.01) if isStraightPath else 1
-        reward *= min_speed_straight_factor
+        steps_reward = (progress / steps) * 100
 
-        expected_steps = (FAST_LAP_STEPS * progress) / 100
-        steps_difference = (expected_steps - steps) / 100
-        steps_reward = reward * steps_difference
-        reward += steps_reward
+        speed_reward = speed ** 2
 
-        # Remove all rewards if trying to take a shortcut to complete the lap
-        isBug = progress == 100 and self.prev_progress < 95
-        if isBug:
-            reward = self.accumulated_reward * -1
+        combined_reward = optimal_line_reward + steps_reward + speed_reward
+
+        isBug = (progress == 100 and self.prev_progress < 95)
+        reward = self.accumulated_reward * -1 if isBug else combined_reward
 
         reward = float(reward)
 
@@ -253,12 +246,12 @@ class RewardCalculator:
             # calculated
             calculated_distance=distance_to_racing_line,
             calculated_is_bug=isBug,
-            calculated_is_straight_path=isStraightPath,
             calculated_optimals=optimals,
-            calculated_steps=expected_steps,
             # factors
+            combined_reward=combined_reward,
             factor_distance_penalty=distance_penalty_factor,
-            factor_min_speed=min_speed_straight_factor,
+            factor_optimal_line_reward=optimal_line_reward,
+            factor_speed_reward=speed_reward,
             factor_steps_reward=steps_reward,
             # given
             given_coordinates=[x, y],
@@ -276,6 +269,146 @@ calculator = RewardCalculator()
 def reward_function(params):
     # Read input parameters
     return calculator.calculate_reward(params)
+
+
+def another_reward_test(params):
+    if params["steps"] > 0:
+        reward = ((params["progress"] / params["steps"]) * 100) + (params["speed"] ** 2)
+    else:
+        reward = 0.01
+
+    return float(reward)
+
+
+def test2():
+    params_baseline =dict(
+        speed=5,
+        progress=5,
+        steps=10,
+    )
+
+    params_less_speed = dict(
+        speed=4.5,
+        progress=5,
+        steps=10,
+    )
+
+    params_less_progress = dict(
+        speed=5,
+        progress=3,
+        steps=10,
+    )
+
+    params_more_steps = dict(
+        speed=5,
+        progress=5,
+        steps=12,
+    )
+
+    params_more_speed = dict(
+        speed=5.5,
+        progress=5,
+        steps=10,
+    )
+
+    params_more_progress = dict(
+        speed=5,
+        progress=7,
+        steps=10,
+    )
+
+    params_less_steps = dict(
+        speed=5,
+        progress=5,
+        steps=8,
+    )
+
+    baseline = another_reward_test(params_baseline)
+    less_speed = another_reward_test(params_less_speed)
+    less_progress = another_reward_test(params_less_progress)
+    more_steps = another_reward_test(params_more_steps)
+    more_speed = another_reward_test(params_more_speed)
+    more_progress = another_reward_test(params_more_progress)
+    less_steps = another_reward_test(params_less_steps)
+
+    print("baseline", baseline)
+    print("less_speed", less_speed)
+    print("less_progress", less_progress)
+    print("more_steps", more_steps)
+    print("more_speed", more_speed)
+    print("more_progress", more_progress)
+    print("less_steps", less_steps)
+
+    assert (baseline > less_speed)
+    assert (baseline > less_progress)
+    assert (baseline > more_steps)
+    assert (baseline < more_speed)
+    assert (baseline < more_progress)
+    assert (baseline < less_steps)
+
+    params_baseline = dict(
+        speed=5,
+        progress=95,
+        steps=200,
+    )
+
+    params_less_speed = dict(
+        speed=4.5,
+        progress=95,
+        steps=200,
+    )
+    params_less_progress = dict(
+        speed=5,
+        progress=93,
+        steps=200,
+    )
+
+    params_more_steps = dict(
+        speed=5,
+        progress=95,
+        steps=205,
+    )
+
+    params_more_speed = dict(
+        speed=5.5,
+        progress=95,
+        steps=200,
+    )
+
+    params_more_progress = dict(
+        speed=5,
+        progress=97,
+        steps=200,
+    )
+
+    params_less_steps = dict(
+        speed=5,
+        progress=95,
+        steps=195,
+    )
+
+    baseline = another_reward_test(params_baseline)
+    less_speed = another_reward_test(params_less_speed)
+    less_progress = another_reward_test(params_less_progress)
+    more_steps = another_reward_test(params_more_steps)
+    more_speed = another_reward_test(params_more_speed)
+    more_progress = another_reward_test(params_more_progress)
+    less_steps = another_reward_test(params_less_steps)
+
+    print("baseline", baseline)
+    print("less_speed", less_speed)
+    print("less_progress", less_progress)
+    print("more_steps", more_steps)
+    print("more_speed", more_speed)
+    print("more_progress", more_progress)
+    print("less_steps", less_steps)
+
+    assert (baseline > less_speed)
+    assert (baseline > less_progress)
+    assert (baseline > more_steps)
+    assert (baseline < more_speed)
+    assert (baseline < more_progress)
+    assert (baseline < less_steps)
 
 
 def test():
@@ -481,3 +614,5 @@ def test():
 
 if __name__ == '__main__':
     test()
+    test2()
+    print("All tests ran.")
