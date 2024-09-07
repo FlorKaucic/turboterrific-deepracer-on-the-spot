@@ -2,10 +2,6 @@ from pprint import pprint
 
 OPTIMAL_LINE_BASE_VALUE = 50
 
-# thresholds
-MIN_SPEED_ON_STRAIGHT_PATH = 4.0
-FAST_LAP_STEPS = 220
-
 # optimal racing line for 2022_reinvent_champ_ccw
 racing_line = [
     [0.7082, 0.35669, 5.0, 0.06064],
