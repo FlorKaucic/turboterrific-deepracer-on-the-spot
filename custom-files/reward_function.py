@@ -1,5 +1,7 @@
 from pprint import pprint
 
+OPTIMAL_LINE_BASE_VALUE = 50
+
 # thresholds
 MIN_SPEED_ON_STRAIGHT_PATH = 4.0
 FAST_LAP_STEPS = 220
@@ -226,7 +228,7 @@ class RewardCalculator:
         # REWARD LOGIC:
         # affecting reward based on distance from the optimal line
         distance_penalty_factor = max((track_width - distance_to_racing_line) / track_width, 1e-3)
-        optimal_line_reward = 50 * distance_penalty_factor
+        optimal_line_reward = OPTIMAL_LINE_BASE_VALUE * distance_penalty_factor
 
         steps_reward = (progress / steps) * 100
 
