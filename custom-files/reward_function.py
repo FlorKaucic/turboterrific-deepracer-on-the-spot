@@ -191,6 +191,29 @@ def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
 
     return distance
 
+class StraightPath:
+    def __init__(self, init_wp, end_wp, min_speed):
+        self.init_wp = init_wp
+        self.end_wp = end_wp
+        self.min_speed = min_speed
+
+    def isCurrentPath(self, prev_wp, next_wp):
+        if not self.end_wp:
+            return prev_wp > self.init_wp
+
+        if not self.init_wp:
+            return next_wp < self.end_wp
+
+        return prev_wp > self.init_wp and next_wp < self.end_wp
+
+
+straight_paths = [
+    StraightPath(101, None, 4.0),
+    StraightPath(None, 6, 4.0),
+    StraightPath(79, 88, 2.5),
+    StraightPath(31, 41, 3.0),
+]
+
 
 class RewardCalculator:
     def __init__(self):
@@ -231,6 +254,12 @@ class RewardCalculator:
         speed_reward = speed ** 2
 
         combined_reward = optimal_line_reward + steps_reward + speed_reward
+
+        for straight_path in straight_paths:
+            if straight_path.isCurrentPath(prev_point, next_point):
+                min_speed = straight_path.min_speed
+                if speed > min_speed:
+                    combined_reward += 25
 
         isBug = (progress == 100 and self.prev_progress < 95)
         reward = self.accumulated_reward * -1 if isBug else combined_reward
