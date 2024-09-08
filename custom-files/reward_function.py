@@ -1,6 +1,6 @@
 from pprint import pprint
 
-OPTIMAL_LINE_BASE_VALUE = 50
+OPTIMAL_LINE_BASE_VALUE = 25
 
 # optimal racing line for 2022_reinvent_champ_ccw
 racing_line = [
