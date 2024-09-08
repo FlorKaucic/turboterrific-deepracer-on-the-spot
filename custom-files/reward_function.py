@@ -236,6 +236,9 @@ class RewardCalculator:
         isBug = (progress == 100 and self.prev_progress < 95)
         reward = self.accumulated_reward * -1 if isBug else combined_reward
 
+        if progress == 100:
+            self.accumulated_reward = 0
+
         reward = float(reward)
 
         self.prev_progress = progress
