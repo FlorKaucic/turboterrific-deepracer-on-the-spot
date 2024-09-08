@@ -1,6 +1,7 @@
 from pprint import pprint
 
 OPTIMAL_LINE_BASE_VALUE = 25
+STEPS_REWARD_BASE = 1000
 
 # optimal racing line for 2022_reinvent_champ_ccw
 racing_line = [
@@ -226,7 +227,7 @@ class RewardCalculator:
         distance_penalty_factor = max((track_width - distance_to_racing_line) / track_width, 1e-3)
         optimal_line_reward = OPTIMAL_LINE_BASE_VALUE * distance_penalty_factor
 
-        steps_reward = (progress / steps) * 100
+        steps_reward = (progress / steps) * STEPS_REWARD_BASE
 
         speed_reward = speed ** 2
 
