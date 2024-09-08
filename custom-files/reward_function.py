@@ -200,9 +200,7 @@ def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
 class RewardCalculator:
     def __init__(self):
         self.prev_progress = 0
-        self.avg_speed = 0
-        self.start_time = time.time()
-        self.lap_start_time = time.time()
+        self.total_time = 0
 
     def calculate_reward(self, params):
         # Read input parameters
@@ -216,10 +214,18 @@ class RewardCalculator:
         steps = params["steps"]
         track_len = params['track_length']
         prev_point, next_point = params['closest_waypoints'][0], params['closest_waypoints'][1]
-        current_step_len = progress - self.prev_progress
 
         if progress < self.prev_progress:
-            self.lap_start_time = time.time()
+            self.prev_progress = 0
+            self.total_time = 0
+
+        current_step_progress = progress - self.prev_progress
+        current_step_len = current_step_progress * track_len / 100
+        current_step_time = current_step_len / speed
+        self.total_time += current_step_time
+
+        distance_achieved = progress * track_len / 100
+        avg_speed = distance_achieved / self.total_time
 
         # Get closest indexes for racing line (and distances to all points on racing line)
         closest_index, second_closest_index = closest_2_racing_points_index(
@@ -229,9 +235,6 @@ class RewardCalculator:
         # Get optimal [x, y] for closest and second closest index
         optimals = racing_line[closest_index]
         optimals_second = racing_line[second_closest_index]
-
-        # Extract optimal speed
-        optimal_speed = optimals[2]
 
         # REWARD LOGIC:
         reward = 1e-3 if is_offtrack else 1  # initial value
@@ -247,8 +250,13 @@ class RewardCalculator:
         # reward *= distance_penalty_factor  # affecting reward based on distance from the optimal line
 
         max_speed_diff = 0.2
-        speed_diff = abs(optimal_speed - speed)
-        optimal_speed_reward = max(1e-3, 1 - ((speed_diff / max_speed_diff) ** 0.4))
+        # optimal_speed = optimals[2]
+        # speed_diff = abs(optimal_speed - speed)
+        # optimal_speed_reward = max(1e-3, 1 - ((speed_diff / max_speed_diff) ** 0.4))
+        optimal_speed = 2.2  # calculated based on track len (33 m) and time goal (15 s)
+        speed_diff = optimal_speed - avg_speed
+        speed_diff_pct = speed_diff / 5.0
+        optimal_speed_reward = 1.0 - speed_diff_pct
 
         # optimal_speed_reward = 1.0 - (optimal_speed - speed) / optimal_speed
         # reward *= optimal_speed_penalty_factor  # affect reward based on speed
@@ -258,11 +266,11 @@ class RewardCalculator:
 
         if progress > expected_progress:
             # reward if complete faster than expected
-            progress_reward = 1.0 + ((progress - expected_progress) / 100.0) ** 0.4
+            progress_reward = 1.0 + ((progress - expected_progress) / 100.0)
             # reward *= progress_reward_factor
         elif (steps % 1) == 0 and progress < expected_progress:
             # Penalize reward if the car pass every 20 steps slower than expected
-            progress_reward = 1.0 - ((expected_progress - progress) / 100.0) ** 0.4
+            progress_reward = 1.0 - ((expected_progress - progress) / 100.0)
             # reward *= progress_penalty_factor
 
         reward = distance_reward + optimal_speed_reward + progress_reward * 2
@@ -277,11 +285,10 @@ class RewardCalculator:
 
         if progress == 100 and self.prev_progress < 95:
             # Heavily penalize reward if trying to take a shortcut to complete the lap
-            reward = -100
+            reward = -300
 
         reward = float(reward)
 
-        lap_progress = progress - self.prev_progress
         self.prev_progress = progress
 
         pprint(dict(
@@ -289,9 +296,9 @@ class RewardCalculator:
             a_progress=progress,
             a_progress_expected=expected_progress,
             a_progress_reward=progress_reward,
-            a_lap_progress=lap_progress,
+            a_step_progress=current_step_progress,
             b_speed_reward=optimal_speed_reward,
-            b_speed_optimal=optimal_speed,
+            b_speed_avg=avg_speed,
             b_speed=speed,
             c_distance_to_racing_line=distance_to_racing_line,
             c_distance_reward=distance_reward,
@@ -299,6 +306,8 @@ class RewardCalculator:
             c_distance_expected2=optimals_second[0:2],
             c_distance_actual=[x, y],
             d_track_width=track_width,
+            d_track_len=track_len,
+            d_total_time=self.total_time,
         ))
         return reward
 
