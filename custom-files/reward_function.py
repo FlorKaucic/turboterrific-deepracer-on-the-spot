@@ -295,6 +295,35 @@ def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
     return distance
 
 
+class StraightPath:
+    def __init__(self, first_point, last_point):
+        self.first_point = first_point
+        self.last_point = last_point
+
+    def is_current_path(self, prev_point, next_point):
+        if not self.first_point:
+            return next_point <= self.last_point
+
+        if not self.last_point:
+            return prev_point >= self.first_point
+
+        return prev_point >= self.first_point and next_point <= self.last_point
+
+
+STRAIGHT_PATHS = [
+    StraightPath(198, None),
+    StraightPath(None, 11),
+    StraightPath(34, 50),
+    StraightPath(80, 94),
+    StraightPath(115, 130),
+    StraightPath(162, 182),
+]
+
+
+def is_current_path_straight(prev_point, next_point):
+    return any([path.is_current_path(prev_point, next_point) for path in STRAIGHT_PATHS])
+
+
 class RewardCalculator:
     def __init__(self):
         self.accumulated_reward = 0
