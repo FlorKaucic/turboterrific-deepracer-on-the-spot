@@ -2,6 +2,10 @@ from pprint import pprint
 
 OPTIMAL_LINE_BASE_VALUE = 100
 STEPS_REWARD_BASE = 1000
+STRAIGHT_PATH_SPEED_REWARD_BASE = 50
+
+MIN_SPEED_ON_STRAIGHT_PATHS = 4.0
+TOP_SPEED = 5.0
 
 # optimal racing line for 2022_may_pro
 racing_line = [
@@ -362,7 +366,15 @@ class RewardCalculator:
 
         speed_reward = speed ** 2
 
-        combined_reward = optimal_line_reward + steps_reward + speed_reward
+        min_speed_factor = 1 - (MIN_SPEED_ON_STRAIGHT_PATHS - speed) / TOP_SPEED
+        is_straight_path = is_current_path_straight(prev_point, next_point)
+        speed_on_straight_paths_extra = (
+            STRAIGHT_PATH_SPEED_REWARD_BASE * min_speed_factor
+            if is_straight_path
+            else 0
+        )
+
+        combined_reward = optimal_line_reward + steps_reward + speed_reward + speed_on_straight_paths_extra
 
         isBug = (progress == 100 and self.prev_progress < 95)
         reward = self.accumulated_reward * -1 if isBug else combined_reward
@@ -380,12 +392,15 @@ class RewardCalculator:
             calculated_distance=distance_to_racing_line,
             calculated_is_bug=isBug,
             calculated_optimals=optimals,
+            calculated_is_straight_path=is_current_path_straight,
+            calculated_speed_ratio=min_speed_factor,
             # factors
             combined_reward=combined_reward,
             factor_distance_penalty=distance_penalty_factor,
             factor_optimal_line_reward=optimal_line_reward,
             factor_speed_reward=speed_reward,
             factor_steps_reward=steps_reward,
+            factor_speed_on_straight_paths_extra=speed_on_straight_paths_extra,
             # given
             given_coordinates=[x, y],
             given_steps=steps,
