@@ -4,6 +4,11 @@ OPTIMAL_LINE_BASE_VALUE = 100
 STEPS_REWARD_BASE = 1000
 STRAIGHT_PATH_SPEED_REWARD_BASE = 50
 
+OPTIMAL_LINE_WEIGHT = 1
+STEPS_WEIGHT = 1
+SPEED_WEIGHT = 1
+SPEED_ON_STRAIGHT_PATH_WEIGHT = 0
+
 MIN_SPEED_ON_STRAIGHT_PATHS = 4.0
 TOP_SPEED = 5.0
 
@@ -315,12 +320,13 @@ class StraightPath:
 
 
 STRAIGHT_PATHS = [
-    StraightPath(198, None),
-    StraightPath(None, 11),
-    StraightPath(34, 50),
-    StraightPath(80, 94),
-    StraightPath(115, 130),
-    StraightPath(162, 182),
+    StraightPath(203, None),
+    StraightPath(None, 17),
+    StraightPath(34, 51),
+    StraightPath(87, 97),
+    StraightPath(120, 133),
+    StraightPath(142, 151),
+    StraightPath(164, 181),
 ]
 
 
@@ -374,7 +380,12 @@ class RewardCalculator:
             else 0
         )
 
-        combined_reward = optimal_line_reward + steps_reward + speed_reward + speed_on_straight_paths_extra
+        combined_reward = (
+            OPTIMAL_LINE_WEIGHT * optimal_line_reward
+            + STEPS_WEIGHT * steps_reward
+            + SPEED_WEIGHT * speed_reward
+            + SPEED_ON_STRAIGHT_PATH_WEIGHT * speed_on_straight_paths_extra
+        )
 
         isBug = (progress == 100 and self.prev_progress < 95)
         reward = self.accumulated_reward * -1 if isBug else combined_reward
@@ -407,6 +418,11 @@ class RewardCalculator:
             given_track_width=track_width,
             # status
             status_accumulated_reward=self.accumulated_reward,
+            # weights
+            weight_optimal_line=OPTIMAL_LINE_WEIGHT,
+            weight_steps=STEPS_WEIGHT,
+            weight_speed=SPEED_WEIGHT,
+            weight_speed_on_straight_path=SPEED_ON_STRAIGHT_PATH_WEIGHT,
         ))
         return reward
 
