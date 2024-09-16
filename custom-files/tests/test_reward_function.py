@@ -194,7 +194,7 @@ class RewardFunctionTest(unittest.TestCase):
         self.assertNotEqual(reward_steps_extreme, 0)
         self.assertTrue(reward_steps_extreme < self.reward_baseline)
 
-    def test_out_of_bounds_steps(self):
+    def test_out_of_bounds_progress(self):
         params_big_progress = dict(
             x=0.5,
             y=0.5,
