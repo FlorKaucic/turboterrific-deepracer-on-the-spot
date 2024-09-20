@@ -385,7 +385,7 @@ class RewardCalculator:
             else 0
         )
         # to avoid zigzag, increase reward if the car uses small steering angles in the straights
-        steering_angle_factor = abs(steering_angle) / HIGHEST_STEERING_ANGLE
+        steering_angle_factor = 1 - abs(steering_angle) / HIGHEST_STEERING_ANGLE
         steering_reward = (
             STEERING_ANGLE_REWARD_BASE * steering_angle_factor
             if is_straight_path
