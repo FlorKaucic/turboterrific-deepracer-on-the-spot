@@ -2,15 +2,18 @@ from pprint import pprint
 
 OPTIMAL_LINE_BASE_VALUE = 100
 STEPS_REWARD_BASE = 1000
-STRAIGHT_PATH_SPEED_REWARD_BASE = 50
+STRAIGHT_PATH_SPEED_REWARD_BASE = 150
+STEERING_ANGLE_REWARD_BASE = 150
 
 OPTIMAL_LINE_WEIGHT = 1
 STEPS_WEIGHT = 1
 SPEED_WEIGHT = 1
 SPEED_ON_STRAIGHT_PATH_WEIGHT = 1
+STEERING_ANGLE_WEIGHT = 1
 
 MIN_SPEED_ON_STRAIGHT_PATHS = 4.0
 TOP_SPEED = 5.0
+HIGHEST_STEERING_ANGLE = 30
 
 # optimal racing line for 2022_may_pro
 racing_line = [
@@ -348,6 +351,7 @@ class RewardCalculator:
         progress = params["progress"]
         steps = params["steps"]
         prev_point, next_point = params['closest_waypoints'][0], params['closest_waypoints'][1]
+        steering_angle = params["steering_angle"]
 
         # Get closest indexes for racing line (and distances to all points on racing line)
         closest_index, second_closest_index = closest_2_racing_points_index(
@@ -380,12 +384,20 @@ class RewardCalculator:
             if is_straight_path
             else 0
         )
+        # to avoid zigzag, increase reward if the car uses small steering angles in the straights
+        steering_angle_factor = abs(steering_angle) / HIGHEST_STEERING_ANGLE
+        steering_reward = (
+            STEERING_ANGLE_REWARD_BASE * steering_angle_factor
+            if is_straight_path
+            else 0
+        )
 
         combined_reward = (
             OPTIMAL_LINE_WEIGHT * optimal_line_reward
             + STEPS_WEIGHT * steps_reward
             + SPEED_WEIGHT * speed_reward
             + SPEED_ON_STRAIGHT_PATH_WEIGHT * speed_on_straight_paths_extra
+            + STEERING_ANGLE_WEIGHT * steering_reward
         )
 
         isBug = (progress == 100 and self.prev_progress < 95)
