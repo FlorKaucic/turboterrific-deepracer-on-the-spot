@@ -366,12 +366,9 @@ class RewardCalculator:
         # reward *= optimal_speed_penalty_factor  # affect reward based on speed
 
         expected_progress = (steps / TOTAL_NUM_STEPS) * 100
-        progress_reward = 1
+        progress_reward = 1.0 + ((progress - expected_progress) / 100.0)
 
-        if (steps % 50) == 0:
-            progress_reward = 1.0 + ((progress - expected_progress) / 100.0)
-
-        reward = distance_reward * 1.5 + optimal_speed_reward + progress_reward
+        reward = distance_reward + optimal_speed_reward + progress_reward
 
         reward = float(reward)
 
@@ -384,6 +381,7 @@ class RewardCalculator:
             a_progress_reward=progress_reward,
             a_step_progress=current_step_progress,
             b_speed_reward=optimal_speed_reward,
+            b_speed_optimal=optimal_speed,
             b_speed_avg=avg_speed,
             b_speed=speed,
             c_distance_to_racing_line=distance_to_racing_line,
