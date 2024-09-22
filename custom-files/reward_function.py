@@ -373,7 +373,7 @@ class RewardCalculator:
         pi = int(progress // 10)
         if pi != 0 and pi not in self.progress_incentive:
             self.progress_incentive.append(pi)
-            extra_progress_reward = (10 * progress / steps) ** (avg_speed + 0.7 * pi)
+            extra_progress_reward = (10 * progress / steps) ** (avg_speed * 2)
 
         reward = 1e-3 if is_offtrack else (distance_reward + optimal_speed_reward + progress_reward + extra_progress_reward)
 
