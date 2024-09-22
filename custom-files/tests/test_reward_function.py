@@ -5,7 +5,7 @@ from mock import patch
 def getMockedRewardFunction():
     import importlib
     rf_module = importlib.import_module("custom-files.reward_function")
-    rf_module.racing_line = [[0.50682, 0.58334, 5.0, 0.06064],]
+    rf_module.racing_line = [[0.50682, 0.58334, 5.0, 0.06064], ]
     return rf_module.reward_function
 
 
@@ -22,6 +22,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=2,
             steps=4,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         self.reward_baseline = reward_function(self.params_baseline)
@@ -38,6 +39,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=2,
             steps=4,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         reward_further_away = reward_function(params_further_away)
@@ -53,6 +55,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=2,
             steps=4,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         reward_closer_to_raceline = reward_function(params_closer_to_raceline)
@@ -68,6 +71,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=2,
             steps=4,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         reward_speed_slower = reward_function(params_speed_slower)
@@ -83,6 +87,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=2,
             steps=4,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         reward_speed_faster = reward_function(params_speed_faster)
@@ -98,6 +103,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=2,
             steps=5,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         reward_steps_slower = reward_function(params_steps_slower)
@@ -113,6 +119,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=2,
             steps=3,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         reward_steps_faster = reward_function(params_steps_faster)
@@ -128,6 +135,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=2,
             steps=4,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         params_distance_lower = dict(
@@ -138,6 +146,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=2,
             steps=4,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         reward_distance_upper = reward_function(params_distance_upper)
@@ -158,6 +167,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=2,
             steps=4,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         params_speed_stopped = dict(
@@ -168,6 +178,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=2,
             steps=4,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         reward_speed_stopped = reward_function(params_speed_stopped)
@@ -188,6 +199,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=2,
             steps=50,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         reward_steps_extreme = reward_function(params_steps_extreme)
@@ -203,6 +215,7 @@ class RewardFunctionTest(unittest.TestCase):
             progress=98,
             steps=4,
             closest_waypoints=[1, 2],
+            steering_angle=0,
         )
 
         reward_big_progress = reward_function(params_big_progress)
