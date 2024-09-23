@@ -324,13 +324,13 @@ class StraightPath:
 
 
 STRAIGHT_PATHS = [
-    StraightPath(203, None),
-    StraightPath(None, 17),
-    StraightPath(34, 51),
-    StraightPath(87, 97),
-    StraightPath(120, 133),
-    StraightPath(142, 151),
-    StraightPath(164, 181),
+    #StraightPath(203, None), # doesn't look necessary
+    StraightPath(None, 13),
+    StraightPath(38, 51),
+    StraightPath(87, 91),
+    StraightPath(121, 135),
+    StraightPath(144, 152),
+    StraightPath(167, 183),
 ]
 
 
