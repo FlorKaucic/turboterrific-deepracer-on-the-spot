@@ -1,7 +1,7 @@
 from pprint import pprint
 
-OPTIMAL_LINE_BASE_VALUE = 100
-STEPS_REWARD_BASE = 1000
+OPTIMAL_LINE_BASE_VALUE = 250
+STEPS_REWARD_BASE = 800
 STRAIGHT_PATH_SPEED_REWARD_BASE = 150
 STEERING_ANGLE_REWARD_BASE = 150
 
@@ -12,8 +12,9 @@ SPEED_ON_STRAIGHT_PATH_WEIGHT = 1
 STEERING_ANGLE_WEIGHT = 1
 
 MIN_SPEED_ON_STRAIGHT_PATHS = 4.0
+MAX_STEERING_ANGLE_ON_STRAIGHT_PATHS = 2.1
 TOP_SPEED = 5.0
-HIGHEST_STEERING_ANGLE = 30
+HIGHEST_STEERING_ANGLE = 17
 
 # optimal racing line for 2022_may_pro
 racing_line = [
@@ -423,7 +424,7 @@ class RewardCalculator:
             factor_distance_penalty=distance_penalty_factor,
             factor_optimal_line_reward=optimal_line_reward,
             factor_speed_reward=speed_reward,
-            factor_steps_reward=steps_reward,
+            factor_steps_reward=[steps_reward, progress, steps],
             factor_speed_on_straight_paths_extra=speed_on_straight_paths_extra,
             # given
             given_coordinates=[x, y],
