@@ -5,7 +5,7 @@ STEPS_REWARD_BASE = 1000
 STRAIGHT_PATH_SPEED_REWARD_BASE = 150
 STEERING_ANGLE_REWARD_BASE = 150
 
-OPTIMAL_LINE_WEIGHT = 0.5
+OPTIMAL_LINE_WEIGHT = 1
 STEPS_WEIGHT = 1
 SPEED_WEIGHT = 1
 SPEED_ON_STRAIGHT_PATH_WEIGHT = 2
@@ -324,7 +324,7 @@ class StraightPath:
 
 
 STRAIGHT_PATHS = [
-    #StraightPath(203, None), # doesn't look necessary
+    # StraightPath(203, None),
     StraightPath(None, 13),
     StraightPath(38, 51),
     StraightPath(87, 91),
