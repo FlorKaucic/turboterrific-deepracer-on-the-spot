@@ -333,20 +333,21 @@ class StraightPath(Path):
 
 STRAIGHT_PATHS = [
     # StraightPath(203, None),
-    StraightPath(None, 14),
-    StraightPath(38, 51),
-    StraightPath(87, 91),
-    StraightPath(121, 135),
-    StraightPath(144, 152),
-    StraightPath(167, 183),
+    StraightPath(None, 15),
+    StraightPath(39, 50),
+    StraightPath(84, 89),
+    StraightPath(120, 135),
+    StraightPath(143, 152),
+    StraightPath(167, 184),
 ]
 
 
 CURVED_PATHS = [
-    CurvePath(17, 34),
-    CurvePath(51, 84),
-    CurvePath(93, 119),
-    CurvePath(185, 208),
+    CurvePath(16, 36),
+    CurvePath(52, 82),
+    CurvePath(98, 118),
+    CurvePath(154, 166),
+    CurvePath(185, 202),
 ]
 
 
