@@ -307,6 +307,7 @@ def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
 
     return distance
 
+
 class Path:
     def __init__(self, first_point, last_point):
         self.first_point = first_point
