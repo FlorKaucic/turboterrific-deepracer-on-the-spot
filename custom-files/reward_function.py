@@ -307,8 +307,7 @@ def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
 
     return distance
 
-
-class StraightPath:
+class Path:
     def __init__(self, first_point, last_point):
         self.first_point = first_point
         self.last_point = last_point
@@ -323,9 +322,17 @@ class StraightPath:
         return prev_point >= self.first_point and next_point <= self.last_point
 
 
+class CurvePath(Path):
+    pass
+
+
+class StraightPath(Path):
+    pass
+
+
 STRAIGHT_PATHS = [
     # StraightPath(203, None),
-    StraightPath(None, 13),
+    StraightPath(None, 14),
     StraightPath(38, 51),
     StraightPath(87, 91),
     StraightPath(121, 135),
@@ -334,8 +341,19 @@ STRAIGHT_PATHS = [
 ]
 
 
+CURVED_PATHS = [
+    CurvePath(17, 34),
+    CurvePath(51, 84),
+    CurvePath(93, 119),
+    CurvePath(185, 208),
+]
+
+
 def is_current_path_straight(prev_point, next_point):
     return any([path.is_current_path(prev_point, next_point) for path in STRAIGHT_PATHS])
+
+def is_current_path_a_curve(prev_point, next_point):
+    return any([path.is_current_path(prev_point, next_point) for path in CURVED_PATHS])
 
 
 class RewardCalculator:
@@ -368,17 +386,19 @@ class RewardCalculator:
             optimals[0:2], optimals_second[0:2], [x, y]
         )
 
+        is_straight_path = is_current_path_straight(prev_point, next_point)
+        is_path_curved = is_current_path_a_curve(prev_point, next_point)
+
         # REWARD LOGIC:
         # affecting reward based on distance from the optimal line
         distance_penalty_factor = max((track_width - distance_to_racing_line) / track_width, 1e-3)
-        optimal_line_reward = OPTIMAL_LINE_BASE_VALUE * distance_penalty_factor
+        optimal_line_reward = OPTIMAL_LINE_BASE_VALUE * distance_penalty_factor * (2 if is_path_curved else 1)
 
         steps_reward = (progress / steps) * STEPS_REWARD_BASE
 
         speed_reward = speed ** 2
 
         min_speed_factor = 1 - (MIN_SPEED_ON_STRAIGHT_PATHS - speed) / TOP_SPEED
-        is_straight_path = is_current_path_straight(prev_point, next_point)
         speed_on_straight_paths_extra = (
             STRAIGHT_PATH_SPEED_REWARD_BASE * min_speed_factor
             if is_straight_path
@@ -393,11 +413,11 @@ class RewardCalculator:
         )
 
         combined_reward = (
-            OPTIMAL_LINE_WEIGHT * optimal_line_reward
-            + STEPS_WEIGHT * steps_reward
-            + SPEED_WEIGHT * speed_reward
-            + SPEED_ON_STRAIGHT_PATH_WEIGHT * speed_on_straight_paths_extra
-            + STEERING_ANGLE_WEIGHT * steering_reward
+                OPTIMAL_LINE_WEIGHT * optimal_line_reward
+                + STEPS_WEIGHT * steps_reward
+                + SPEED_WEIGHT * speed_reward
+                + SPEED_ON_STRAIGHT_PATH_WEIGHT * speed_on_straight_paths_extra
+                + STEERING_ANGLE_WEIGHT * steering_reward
         )
 
         isBug = (progress == 100 and self.prev_progress < 95)
@@ -417,6 +437,7 @@ class RewardCalculator:
             calculated_is_bug=isBug,
             calculated_optimals=optimals,
             calculated_is_straight_path=is_straight_path,
+            calculated_is_path_curved=is_path_curved,
             calculated_speed_ratio=min_speed_factor,
             # factors
             combined_reward=combined_reward,
