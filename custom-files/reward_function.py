@@ -353,6 +353,7 @@ CURVED_PATHS = [
 def is_current_path_straight(prev_point, next_point):
     return any([path.is_current_path(prev_point, next_point) for path in STRAIGHT_PATHS])
 
+
 def is_current_path_a_curve(prev_point, next_point):
     return any([path.is_current_path(prev_point, next_point) for path in CURVED_PATHS])
 
