@@ -9,8 +9,8 @@
     {"steering_angle": -6, "speed": 3.6},
     {"steering_angle": -7, "speed": 2.5},
     {"steering_angle": -11, "speed": 2.8},
-    {"steering_angle": -15, "speed": 2.0},
-    {"steering_angle": -20, "speed": 1.6}
+    {"steering_angle": -16, "speed": 2.0},
+    {"steering_angle": -22, "speed": 1.6}
 ],
   "sensor": [
     "FRONT_FACING_CAMERA"
