@@ -334,7 +334,7 @@ class StraightPath(Path):
 STRAIGHT_PATHS = [
     # StraightPath(203, None),
     StraightPath(None, 15),
-    StraightPath(39, 50),
+    StraightPath(41, 50),
     StraightPath(84, 89),
     StraightPath(120, 135),
     StraightPath(143, 152),
