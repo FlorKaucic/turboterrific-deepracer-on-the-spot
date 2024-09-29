@@ -5,8 +5,7 @@ STEPS_REWARD_BASE = 1000
 STRAIGHT_PATH_SPEED_REWARD_BASE = 150
 STEERING_ANGLE_REWARD_BASE = 150
 
-OPTIMAL_LINE_WEIGHT = 0
-CURVE_PATH_OPTIMAL_LINE_WEIGHT = 0
+OPTIMAL_LINE_WEIGHT = 1
 STEPS_WEIGHT = 1
 SPEED_WEIGHT = 1
 SPEED_ON_STRAIGHT_PATH_WEIGHT = 2
@@ -396,7 +395,7 @@ class RewardCalculator:
         # REWARD LOGIC:
         # affecting reward based on distance from the optimal line
         distance_penalty_factor = max((track_width - distance_to_racing_line) / track_width, 1e-3)
-        optimal_line_reward = OPTIMAL_LINE_BASE_VALUE * distance_penalty_factor
+        optimal_line_reward = OPTIMAL_LINE_BASE_VALUE * distance_penalty_factor * (2 if is_path_curved else 1)
 
         steps_reward = (progress / steps) * STEPS_REWARD_BASE
 
@@ -417,7 +416,7 @@ class RewardCalculator:
         )
 
         combined_reward = (
-                (CURVE_PATH_OPTIMAL_LINE_WEIGHT if is_path_curved else OPTIMAL_LINE_WEIGHT) * optimal_line_reward
+                OPTIMAL_LINE_WEIGHT * optimal_line_reward
                 + STEPS_WEIGHT * steps_reward
                 + SPEED_WEIGHT * speed_reward
                 + SPEED_ON_STRAIGHT_PATH_WEIGHT * speed_on_straight_paths_extra
