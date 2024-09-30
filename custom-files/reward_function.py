@@ -309,9 +309,10 @@ def dist_to_racing_line(closest_coords, second_closest_coords, car_coords):
 
 
 class Path:
-    def __init__(self, first_point, last_point):
+    def __init__(self, first_point, last_point, weight=1):
         self.first_point = first_point
         self.last_point = last_point
+        self.weight = weight
 
     def is_current_path(self, prev_point, next_point):
         if not self.first_point:
