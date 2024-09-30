@@ -331,6 +331,10 @@ class StraightPath(Path):
     pass
 
 
+class NonSteeringPath(Path):
+    pass
+
+
 STRAIGHT_PATHS = [
     # StraightPath(203, None),
     StraightPath(None, 15),
@@ -350,6 +354,9 @@ CURVED_PATHS = [
     CurvePath(185, 202),
 ]
 
+NON_STEERING_PATHS = [
+    NonSteeringPath(70, 77),
+]
 
 def is_current_path_straight(prev_point, next_point):
     return any([path.is_current_path(prev_point, next_point) for path in STRAIGHT_PATHS])
@@ -357,6 +364,10 @@ def is_current_path_straight(prev_point, next_point):
 
 def is_current_path_a_curve(prev_point, next_point):
     return any([path.is_current_path(prev_point, next_point) for path in CURVED_PATHS])
+
+
+def is_current_path_a_non_steering_section(prev_point, next_point):
+    return any([path.is_current_path(prev_point, next_point) for path in NON_STEERING_PATHS])
 
 
 class RewardCalculator:
@@ -391,6 +402,7 @@ class RewardCalculator:
 
         is_straight_path = is_current_path_straight(prev_point, next_point)
         is_path_curved = is_current_path_a_curve(prev_point, next_point)
+        is_path_non_steering = is_current_path_a_non_steering_section(prev_point, next_point)
 
         # REWARD LOGIC:
         # affecting reward based on distance from the optimal line
@@ -411,7 +423,7 @@ class RewardCalculator:
         steering_angle_factor = 1 - abs(steering_angle) / HIGHEST_STEERING_ANGLE
         steering_reward = (
             STEERING_ANGLE_REWARD_BASE * steering_angle_factor
-            if is_straight_path
+            if is_straight_path or is_path_non_steering
             else 0
         )
 
