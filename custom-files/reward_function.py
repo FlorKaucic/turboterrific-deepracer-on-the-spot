@@ -395,7 +395,7 @@ class RewardCalculator:
         # REWARD LOGIC:
         # affecting reward based on distance from the optimal line
         distance_penalty_factor = max((track_width - distance_to_racing_line) / track_width, 1e-3)
-        optimal_line_reward = OPTIMAL_LINE_BASE_VALUE * distance_penalty_factor * (2 if is_path_curved else 1)
+        optimal_line_reward = OPTIMAL_LINE_BASE_VALUE * distance_penalty_factor
 
         steps_reward = (progress / steps) * STEPS_REWARD_BASE
 
