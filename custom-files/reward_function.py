@@ -336,7 +336,7 @@ class NonSteeringPath(Path):
 
 
 STRAIGHT_PATHS = [
-    # StraightPath(203, None),
+    StraightPath(207, None),
     StraightPath(None, 15),
     StraightPath(41, 50),
     StraightPath(84, 89),
